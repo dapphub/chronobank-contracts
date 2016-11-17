@@ -3,4 +3,5 @@ module.exports = function(deployer) {
   deployer.deploy(ChronoBankPlatform);
   deployer.deploy(ChronoBankPlatformEmitter);
   deployer.deploy(EventsHistory);
+  deployer.deploy(ChronoBankAsset);
 };
