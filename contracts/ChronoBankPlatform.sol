@@ -7,11 +7,13 @@ contract Emitter {
     function emitIssue(bytes32 _symbol, uint _value, address _by);
     function emitRevoke(bytes32 _symbol, uint _value, address _by);
     function emitOwnershipChange(address _from, address _to, bytes32 _symbol);
+    function emitApprove(address _from, address _spender, bytes32 _symbol, uint _value);
     function emitError(bytes32 _message);
 }
 
 contract Proxy {
     function emitTransfer(address _from, address _to, uint _value);
+    function emitApprove(address _from, address _spender, uint _value);
 }
 
 contract ChronoBankPlatform is Owned {
@@ -32,6 +34,7 @@ contract ChronoBankPlatform is Owned {
 
     struct Wallet {
         uint balance;
+        mapping(uint => uint) allowance;
     }
 
     struct Holder {
@@ -149,7 +152,14 @@ contract ChronoBankPlatform is Owned {
             _error("Insufficient balance");
             return false;
         }
+        if (_fromId != _senderId && _allowance(_fromId, _senderId, _symbol) < _value) {
+            _error("Not enough allowance");
+            return false;
+        }
         _transferDirect(_fromId, _toId, _value, _symbol);
+        if (_fromId != _senderId) {
+            assets[_symbol].wallets[_fromId].allowance[_senderId] -= _value;
+        }
         // Internal Out Of Gas/Throw: revert this transaction too;
         // Call Stack Depth Limit reached: n/a after HF 4;
         // Recursive Call: safe, all changes already made.
@@ -275,5 +285,57 @@ contract ChronoBankPlatform is Owned {
         // Recursive Call: safe, all changes already made.
         eventsHistory.emitOwnershipChange(oldOwner, _address(newOwnerId), _symbol);
         return true;
+    }
+
+    function _approve(uint _spenderId, uint _value, bytes32 _symbol, uint _senderId) internal returns(bool) {
+        if (!isCreated(_symbol)) {
+            _error("Asset is not issued");
+            return false;
+        }
+        if (_senderId == _spenderId) {
+            _error("Cannot approve to oneself");
+            return false;
+        }
+        assets[_symbol].wallets[_senderId].allowance[_spenderId] = _value;
+        // Internal Out Of Gas/Throw: revert this transaction too;
+        // Call Stack Depth Limit reached: revert this transaction too;
+        // Recursive Call: safe, all changes already made.
+        eventsHistory.emitApprove(_address(_senderId), _address(_spenderId), _symbol, _value);
+        ProxyConf conf = proxies[_symbol];
+        if (conf.proxy != 0x0) {
+            // Internal Out Of Gas/Throw: revert this transaction too;
+            // Call Stack Depth Limit reached: n/a after HF 4;
+            // Recursive Call: safe, all changes already made.
+            Proxy(conf.proxy).emitApprove(_address(_senderId), _address(_spenderId), _value);
+        }
+        return true;
+    }
+
+    function approve(address _spender, uint _value, bytes32 _symbol) returns(bool) {
+        return _approve(_createHolderId(_spender), _value, _symbol, _createHolderId(msg.sender));
+    }
+
+    function proxyApprove(address _spender, uint _value, bytes32 _symbol, address _sender) onlyProxy(_symbol) returns(bool) {
+        return _approve(_createHolderId(_spender), _value, _symbol, _createHolderId(_sender));
+    }
+
+    function allowance(address _from, address _spender, bytes32 _symbol) constant returns(uint) {
+        return _allowance(getHolderId(_from), getHolderId(_spender), _symbol);
+    }
+
+    function _allowance(uint _fromId, uint _toId, bytes32 _symbol) constant internal returns(uint) {
+        return assets[_symbol].wallets[_fromId].allowance[_toId];
+    }
+
+    function transferFrom(address _from, address _to, uint _value, bytes32 _symbol) returns(bool) {
+        return transferFromWithReference(_from, _to, _value, _symbol, "");
+    }
+
+    function transferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference) returns(bool) {
+        return _transfer(getHolderId(_from), _createHolderId(_to), _value, _symbol, _reference, getHolderId(msg.sender));
+    }
+
+    function proxyTransferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference, address _sender) onlyProxy(_symbol) returns(bool) {
+        return _transfer(getHolderId(_from), _createHolderId(_to), _value, _symbol, _reference, getHolderId(_sender));
     }
 }

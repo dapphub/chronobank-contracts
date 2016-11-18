@@ -2,6 +2,7 @@
 Labour Hours contracts.
 
 ## Testing
+NodeJS 6+ required.
 ```bash
 npm install -g ethereumjs-testrpc
 npm install -g truffle

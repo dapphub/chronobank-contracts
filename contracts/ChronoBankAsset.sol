@@ -4,6 +4,7 @@ import "ChronoBankPlatform.sol";
 
 contract ChronoBankAsset is Owned {
     event Transfer(address indexed from, address indexed to, uint value);
+    event Approve(address indexed from, address indexed spender, uint value);
 
     ChronoBankPlatform public chronoBankPlatform;
     bytes32 public symbol;
@@ -46,7 +47,23 @@ contract ChronoBankAsset is Owned {
         return chronoBankPlatform.proxyTransferWithReference(_to, _value, symbol, _reference, msg.sender);
     }
 
+    function transferFrom(address _from, address _to, uint _value) returns(bool) {
+        return _transferFromWithReference(_from, _to, _value, "");
+    }
+
+    function transferFromWithReference(address _from, address _to, uint _value, string _reference) returns(bool) {
+        return _transferFromWithReference(_from, _to, _value, _reference);
+    }
+
+    function _transferFromWithReference(address _from, address _to, uint _value, string _reference) internal returns(bool) {
+        return chronoBankPlatform.proxyTransferFromWithReference(_from, _to, _value, symbol, _reference, msg.sender);
+    }
+
     function emitTransfer(address _from, address _to, uint _value) onlyChronoBankPlatform() {
         Transfer(_from, _to, _value);
+    }
+
+    function emitApprove(address _from, address _spender, uint _value) onlyChronoBankPlatform() {
+        Approve(_from, _spender, _value);
     }
 }
