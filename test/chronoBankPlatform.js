@@ -27,7 +27,7 @@ contract('ChronoBankPlatform', function(accounts) {
   var eventsHistory;
 
   before('setup', function(done) {
-    chronoBankPlatform = ChronoBankPlatform.deployed();
+    chronoBankPlatform = ChronoBankPlatformTestable.deployed();
     eventsHistory = EventsHistory.deployed();
     var chronoBankPlatformEmitter = ChronoBankPlatformEmitter.deployed();
     var chronoBankPlatformEmitterAbi = web3.eth.contract(chronoBankPlatformEmitter.abi).at('0x0');

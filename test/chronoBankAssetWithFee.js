@@ -1,7 +1,7 @@
 var Reverter = require('./helpers/reverter');
 var bytes32 = require('./helpers/bytes32');
 var eventsHelper = require('./helpers/eventsHelper');
-contract('ChronoBankAsset', function(accounts) {
+contract('ChronoBankAssetWithFee', function(accounts) {
   var reverter = new Reverter(web3);
   afterEach('revert', reverter.revert);
 
@@ -18,7 +18,7 @@ contract('ChronoBankAsset', function(accounts) {
 
   before('setup others', function(done) {
     chronoBankPlatform = ChronoBankPlatformTestable.deployed();
-    chronoBankAsset = ChronoBankAsset.deployed();
+    chronoBankAsset = ChronoBankAssetWithFee.deployed();
     var stub = Stub.deployed();
     chronoBankPlatform.setupEventsHistory(stub.address).then(function() {
       return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE);
@@ -291,6 +291,82 @@ contract('ChronoBankAsset', function(accounts) {
       return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
     }).then(function(result) {
       assert.equal(result.valueOf(), VALUE);
+    });
+  });
+
+  it('should take min fee on transfer', function() {
+    var holder = accounts[0];
+    var holder2 = accounts[1];
+    var feeAddress = accounts[2];
+    var amount = 1;
+    var feeMin = 1;
+    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
+      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL);
+    }).then(function() {
+      return chronoBankAsset.setupFee(feeAddress);
+    }).then(function() {
+      return chronoBankAsset.transfer(holder2, amount);
+    }).then(function() {
+      return chronoBankAsset.balanceOf(holder);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), VALUE - amount - feeMin);
+      return chronoBankAsset.balanceOf(holder2);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), amount);
+      return chronoBankAsset.balanceOf(feeAddress);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), feeMin);
+    });
+  });
+
+  it('should take percent fee on transfer', function() {
+    var holder = accounts[0];
+    var holder2 = accounts[1];
+    var feeAddress = accounts[2];
+    var amount = 10000;
+    var feePercent = 15; // 0.15 * 100; 
+    return chronoBankAsset.init(chronoBankPlatform.address, SYMBOL2, NAME).then(function() {
+      return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL2);
+    }).then(function() {
+      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL2);
+    }).then(function() {
+      return chronoBankAsset.setupFee(feeAddress);
+    }).then(function() {
+      return chronoBankAsset.transfer(holder2, amount);
+    }).then(function() {
+      return chronoBankAsset.balanceOf(holder);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), VALUE2 - amount - feePercent);
+      return chronoBankAsset.balanceOf(holder2);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), amount);
+      return chronoBankAsset.balanceOf(feeAddress);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), feePercent);
+    });
+  });
+
+  it('should return fee on failed transfer', function() {
+    var holder = accounts[0];
+    var holder2 = accounts[1];
+    var feeAddress = accounts[2];
+    var amount = VALUE;
+    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
+      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL);
+    }).then(function() {
+      return chronoBankAsset.setupFee(feeAddress);
+    }).then(function() {
+      return chronoBankAsset.transfer(holder2, amount);
+    }).then(function() {
+      return chronoBankAsset.balanceOf(holder);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), VALUE);
+      return chronoBankAsset.balanceOf(holder2);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), 0);
+      return chronoBankAsset.balanceOf(feeAddress);
+    }).then(function(balance) {
+      assert.equal(balance.valueOf(), 0);
     });
   });
 });

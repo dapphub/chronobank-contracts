@@ -35,6 +35,10 @@ contract ChronoBankAsset is Owned {
         return chronoBankPlatform.balanceOf(_owner, symbol);
     }
 
+    function decimals() constant returns(uint8) {
+        return chronoBankPlatform.baseUnit(symbol);
+    }
+
     function transfer(address _to, uint _value) returns(bool) {
         return _transferWithReference(_to, _value, "");
     }

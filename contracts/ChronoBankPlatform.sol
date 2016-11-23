@@ -168,14 +168,6 @@ contract ChronoBankPlatform is Owned {
         return true;
     }
 
-    function transfer(address _to, uint _value, bytes32 _symbol) returns(bool) {
-        return transferWithReference(_to, _value, _symbol, "");
-    }
-
-    function transferWithReference(address _to, uint _value, bytes32 _symbol, string _reference) returns(bool) {
-        return _transfer(getHolderId(msg.sender), _createHolderId(_to), _value, _symbol, _reference, getHolderId(msg.sender));
-    }
-
     // this function will fail unless isProxy[msg.sender] == true
     function proxyTransferWithReference(address _to, uint _value, bytes32 _symbol, string _reference, address _sender) onlyProxy(_symbol) returns(bool) {
         return _transfer(getHolderId(_sender), _createHolderId(_to), _value, _symbol, _reference, getHolderId(_sender));
@@ -325,14 +317,6 @@ contract ChronoBankPlatform is Owned {
 
     function _allowance(uint _fromId, uint _toId, bytes32 _symbol) constant internal returns(uint) {
         return assets[_symbol].wallets[_fromId].allowance[_toId];
-    }
-
-    function transferFrom(address _from, address _to, uint _value, bytes32 _symbol) returns(bool) {
-        return transferFromWithReference(_from, _to, _value, _symbol, "");
-    }
-
-    function transferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference) returns(bool) {
-        return _transfer(getHolderId(_from), _createHolderId(_to), _value, _symbol, _reference, getHolderId(msg.sender));
     }
 
     function proxyTransferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference, address _sender) onlyProxy(_symbol) returns(bool) {
