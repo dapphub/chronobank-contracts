@@ -5,9 +5,12 @@ import "ChronoBankAsset.sol";
 contract ChronoBankAssetWithFee is ChronoBankAsset {
     address public feeAddress;
 
-    modifier takeFee(address _from, uint _fromValue) {
+    modifier takeFee(address _from, uint _fromValue, bool[1] memory _success) {
         if (_transferFee(_from, _fromValue)) {
             _;
+            if (!_success[0]) {
+                _returnFee(msg.sender, _fromValue);
+            }
         }
     }
 
@@ -16,20 +19,30 @@ contract ChronoBankAssetWithFee is ChronoBankAsset {
         return true;
     }
 
-    function _transferWithReference(address _to, uint _value, string _reference) takeFee(msg.sender, _value) internal returns(bool) {
-        if (!super._transferWithReference(_to, _value, _reference)) {
-            _returnFee(msg.sender, _value);
-            return false;
-        }
-        return true;
+    function transfer(address _to, uint _value) returns(bool) {
+        return _transferWithReference(_to, _value, "", [false]);
     }
 
-    function _transferFromWithReference(address _from, address _to, uint _value, string _reference) takeFee(_from, _value) internal returns(bool) {
-        if (!super._transferFromWithReference(_from, _to, _value, _reference)) {
-            _returnFee(_from, _value);
-            return false;
-        }
-        return true;
+    function transferWithReference(address _to, uint _value, string _reference) returns(bool) {
+        return _transferWithReference(_to, _value, _reference, [false]);
+    }
+
+    function _transferWithReference(address _to, uint _value, string _reference, bool[1] memory _success) takeFee(msg.sender, _value, _success) internal returns(bool) {
+        _success[0] = super._transferWithReference(_to, _value, _reference);
+        return _success[0];
+    }
+
+    function transferFrom(address _from, address _to, uint _value) returns(bool) {
+        return _transferFromWithReference(_from, _to, _value, "", [false]);
+    }
+
+    function transferFromWithReference(address _from, address _to, uint _value, string _reference) returns(bool) {
+        return _transferFromWithReference(_from, _to, _value, _reference, [false]);
+    }
+
+    function _transferFromWithReference(address _from, address _to, uint _value, string _reference, bool[1] memory _success) takeFee(_from, _value, _success) internal returns(bool) {
+        _success[0] = super._transferFromWithReference(_from, _to, _value, _reference);
+        return _success[0];
     }
 
     function _transferFee(address _feeFrom, uint _fromValue) internal returns(bool) {
