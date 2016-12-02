@@ -11,7 +11,7 @@ contract ChronoBankAssetWithFee is ChronoBankAsset, Owned {
         if (_transferFee(_from, _fromValue, _sender)) {
             _;
             if (!_success[0]) {
-                _returnFee(_sender, _fromValue);
+                _returnFee(_from, _fromValue);
             }
         }
     }

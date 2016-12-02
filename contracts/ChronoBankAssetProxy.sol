@@ -45,6 +45,10 @@ contract ChronoBankAssetProxy {
         return chronoBankPlatform.balanceOf(_owner, symbol);
     }
 
+    function allowance(address _from, address _spender) constant returns(uint) {
+        return chronoBankPlatform.allowance(_from, _spender, symbol);
+    }
+
     function decimals() constant returns(uint8) {
         return chronoBankPlatform.baseUnit(symbol);
     }
@@ -158,7 +162,7 @@ contract ChronoBankAssetProxy {
         }
         delete pendingVersion;
         delete pendingVersionTimestamp;
-        return true; 
+        return true;
     }
 
     function commitUpgrade() returns(bool) {
