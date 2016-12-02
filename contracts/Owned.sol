@@ -1,4 +1,4 @@
-pragma solidity ^0.4.4;
+pragma solidity 0.4.4;
 
 contract Owned {
     address public contractOwner;
@@ -25,14 +25,6 @@ contract Owned {
         }
         contractOwner = pendingContractOwner;
         delete pendingContractOwner;
-        return true;
-    }
-
-    // Root previleges.
-    function forwardCall(address _to, uint _value, bytes _data) onlyContractOwner() returns(bool) {
-        if (!_to.call.value(_value)(_data)) {
-            throw;
-        }
         return true;
     }
 }

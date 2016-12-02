@@ -1,73 +1,46 @@
-pragma solidity ^0.4.4;
+pragma solidity 0.4.4;
 
-import "ChronoBankPlatform.sol";
+import "ChronoBankAssetInterface.sol";
+import {ChronoBankAssetProxyInterface as ChronoBankAssetProxy} from "ChronoBankAssetProxyInterface.sol";
 
-contract ChronoBankAsset is Owned {
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approve(address indexed from, address indexed spender, uint value);
+contract ChronoBankAsset is ChronoBankAssetInterface {
+    ChronoBankAssetProxy public proxy;
 
-    ChronoBankPlatform public chronoBankPlatform;
-    bytes32 public symbol;
-    string public name;
-
-    function init(address _chronoBankPlatform, bytes32 _symbol, string _name) onlyContractOwner() returns(bool) {
-        ChronoBankPlatform ma = ChronoBankPlatform(_chronoBankPlatform);
-        if (!ma.isCreated(_symbol)) {
-            return false;
-        }
-        chronoBankPlatform = ma;
-        symbol = _symbol;
-        name = _name;
-        return true;
-    }
-
-    modifier onlyChronoBankPlatform() {
-        if (msg.sender == address(chronoBankPlatform)) {
+    modifier onlyProxy() {
+        if (proxy == msg.sender) {
             _;
         }
     }
 
-    function totalSupply() constant returns(uint) {
-        return chronoBankPlatform.totalSupply(symbol);
+    function init(address _proxy) returns(bool) {
+        if (address(proxy) != 0x0) {
+            return false;
+        }
+        proxy = ChronoBankAssetProxy(_proxy);
+        return true;
     }
 
-    function balanceOf(address _owner) constant returns(uint) {
-        return chronoBankPlatform.balanceOf(_owner, symbol);
+    function __transferWithReference(address _to, uint _value, string _reference, address _sender) onlyProxy() returns(bool) {
+        return _transferWithReference(_to, _value, _reference, _sender);
     }
 
-    function decimals() constant returns(uint8) {
-        return chronoBankPlatform.baseUnit(symbol);
+    function _transferWithReference(address _to, uint _value, string _reference, address _sender) internal returns(bool) {
+        return proxy.__transferWithReference(_to, _value, _reference, _sender);
     }
 
-    function transfer(address _to, uint _value) returns(bool) {
-        return _transferWithReference(_to, _value, "");
+    function __transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) onlyProxy() returns(bool) {
+        return _transferFromWithReference(_from, _to, _value, _reference, _sender);
     }
 
-    function transferWithReference(address _to, uint _value, string _reference) returns(bool) {
-        return _transferWithReference(_to, _value, _reference);
+    function _transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) internal returns(bool) {
+        return proxy.__transferFromWithReference(_from, _to, _value, _reference, _sender);
     }
 
-    function _transferWithReference(address _to, uint _value, string _reference) internal returns(bool) {
-        return chronoBankPlatform.proxyTransferWithReference(_to, _value, symbol, _reference, msg.sender);
+    function __approve(address _spender, uint _value, address _sender) onlyProxy() returns(bool) {
+        return _approve(_spender, _value, _sender);
     }
 
-    function transferFrom(address _from, address _to, uint _value) returns(bool) {
-        return _transferFromWithReference(_from, _to, _value, "");
-    }
-
-    function transferFromWithReference(address _from, address _to, uint _value, string _reference) returns(bool) {
-        return _transferFromWithReference(_from, _to, _value, _reference);
-    }
-
-    function _transferFromWithReference(address _from, address _to, uint _value, string _reference) internal returns(bool) {
-        return chronoBankPlatform.proxyTransferFromWithReference(_from, _to, _value, symbol, _reference, msg.sender);
-    }
-
-    function emitTransfer(address _from, address _to, uint _value) onlyChronoBankPlatform() {
-        Transfer(_from, _to, _value);
-    }
-
-    function emitApprove(address _from, address _spender, uint _value) onlyChronoBankPlatform() {
-        Approve(_from, _spender, _value);
+    function _approve(address _spender, uint _value, address _sender) internal returns(bool) {
+        return proxy.__approve(_spender, _value, _sender);
     }
 }

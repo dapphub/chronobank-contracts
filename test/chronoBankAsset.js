@@ -15,46 +15,52 @@ contract('ChronoBankAsset', function(accounts) {
   var IS_REISSUABLE = false;
   var chronoBankPlatform;
   var chronoBankAsset;
+  var chronoBankAssetProxy;
 
   before('setup others', function(done) {
     chronoBankPlatform = ChronoBankPlatformTestable.deployed();
     chronoBankAsset = ChronoBankAsset.deployed();
+    chronoBankAssetProxy = ChronoBankAssetProxy.deployed();
     var stub = Stub.deployed();
     chronoBankPlatform.setupEventsHistory(stub.address).then(function() {
       return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE);
     }).then(function() {
       return chronoBankPlatform.issueAsset(SYMBOL2, VALUE2, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE);
     }).then(function() {
-      return chronoBankAsset.init(chronoBankPlatform.address, SYMBOL, NAME);
+      return chronoBankAssetProxy.init(chronoBankPlatform.address, SYMBOL, NAME);
+    }).then(function() {
+      return chronoBankAssetProxy.proposeUpgrade(chronoBankAsset.address);
+    }).then(function() {
+      return chronoBankAsset.init(chronoBankAssetProxy.address);
     }).then(function() {
       reverter.snapshot(done);
     }).catch(done);
   });
 
   it('should be possible to get total supply', function() {
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankAsset.totalSupply.call();
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      return chronoBankAssetProxy.totalSupply.call();
     }).then(function(result) {
       assert.equal(result.valueOf(), VALUE);
     });
   });
   it('should be possible to get balance for holder', function() {
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankAsset.balanceOf.call(accounts[0]);
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      return chronoBankAssetProxy.balanceOf.call(accounts[0]);
     }).then(function(result) {
       assert.equal(result.valueOf(), VALUE);
     });
   });
   it('should be possible to get total supply if not allowed', function() {
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL2).then(function() {
-      return chronoBankAsset.totalSupply.call();
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL2).then(function() {
+      return chronoBankAssetProxy.totalSupply.call();
     }).then(function(result) {
       assert.equal(result.valueOf(), VALUE);
     });
   });
   it('should be possible to get balance if not allowed', function() {
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL2).then(function() {
-      return chronoBankAsset.balanceOf.call(accounts[0]);
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL2).then(function() {
+      return chronoBankAssetProxy.balanceOf.call(accounts[0]);
     }).then(function(result) {
       assert.equal(result.valueOf(), VALUE);
     });
@@ -62,12 +68,10 @@ contract('ChronoBankAsset', function(accounts) {
   it('should not emit transfer event from not base', function() {
     var owner = accounts[0];
     var nonOwner = accounts[1];
-    var watcher = chronoBankAsset.Transfer();
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL2).then(function() {
-      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL2);
-    }).then(function() {
-      eventsHelper.setupEvents(chronoBankAsset);
-      return chronoBankAsset.emitTransfer(owner, nonOwner, 100);
+    var watcher = chronoBankAssetProxy.Transfer();
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL2).then(function() {
+      eventsHelper.setupEvents(chronoBankAssetProxy);
+      return chronoBankAssetProxy.emitTransfer(owner, nonOwner, 100);
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);
     }).then(function(events) {
@@ -77,12 +81,10 @@ contract('ChronoBankAsset', function(accounts) {
   it('should not be possible to transfer if not allowed', function() {
     var owner = accounts[0];
     var nonOwner = accounts[1];
-    var watcher = chronoBankAsset.Transfer();
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL2).then(function() {
-      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL2);
-    }).then(function() {
-      eventsHelper.setupEvents(chronoBankAsset);
-      return chronoBankAsset.transfer(nonOwner, 100);
+    var watcher = chronoBankAssetProxy.Transfer();
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL2).then(function() {
+      eventsHelper.setupEvents(chronoBankAssetProxy);
+      return chronoBankAssetProxy.transfer(nonOwner, 100);
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);
     }).then(function(events) {
@@ -99,10 +101,10 @@ contract('ChronoBankAsset', function(accounts) {
     var owner = accounts[0];
     var nonOwner = accounts[1];
     var amount = 1;
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankAsset.transfer(nonOwner, VALUE);
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      return chronoBankAssetProxy.transfer(nonOwner, VALUE);
     }).then(function() {
-      return chronoBankAsset.transfer(nonOwner, amount);
+      return chronoBankAssetProxy.transfer(nonOwner, amount);
     }).then(function() {
       return chronoBankPlatform.balanceOf.call(nonOwner, SYMBOL);
     }).then(function(result) {
@@ -117,10 +119,10 @@ contract('ChronoBankAsset', function(accounts) {
     var nonOwner = accounts[1];
     var value = 1;
     var amount = 2;
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankAsset.transfer(nonOwner, VALUE - value);
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      return chronoBankAssetProxy.transfer(nonOwner, VALUE - value);
     }).then(function() {
-      return chronoBankAsset.transfer(nonOwner, amount);
+      return chronoBankAssetProxy.transfer(nonOwner, amount);
     }).then(function() {
       return chronoBankPlatform.balanceOf.call(nonOwner, SYMBOL);
     }).then(function(result) {
@@ -134,12 +136,10 @@ contract('ChronoBankAsset', function(accounts) {
     var owner = accounts[0];
     var nonOwner = accounts[1];
     var amount = 0;
-    var watcher = chronoBankAsset.Transfer();
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL);
-    }).then(function() {
-      eventsHelper.setupEvents(chronoBankAsset);
-      return chronoBankAsset.transfer(nonOwner, amount);
+    var watcher = chronoBankAssetProxy.Transfer();
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      eventsHelper.setupEvents(chronoBankAssetProxy);
+      return chronoBankAssetProxy.transfer(nonOwner, amount);
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);
     }).then(function(events) {
@@ -155,12 +155,10 @@ contract('ChronoBankAsset', function(accounts) {
   it('should not be possible to transfer to oneself', function() {
     var owner = accounts[0];
     var amount = 100;
-    var watcher = chronoBankAsset.Transfer();
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL);
-    }).then(function() {
+    var watcher = chronoBankAssetProxy.Transfer();
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
       eventsHelper.setupEvents(chronoBankPlatform);
-      return chronoBankAsset.transfer(owner, amount);
+      return chronoBankAssetProxy.transfer(owner, amount);
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);
     }).then(function(events) {
@@ -177,10 +175,10 @@ contract('ChronoBankAsset', function(accounts) {
     var holder = accounts[0];
     var holder2 = accounts[1];
     var amount = 1;
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankAsset.transfer(holder2, VALUE);
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      return chronoBankAssetProxy.transfer(holder2, VALUE);
     }).then(function() {
-      return chronoBankAsset.transfer(holder, amount, {from: holder2});
+      return chronoBankAssetProxy.transfer(holder, amount, {from: holder2});
     }).then(function() {
       return chronoBankPlatform.balanceOf.call(holder2, SYMBOL);
     }).then(function(result) {
@@ -194,8 +192,8 @@ contract('ChronoBankAsset', function(accounts) {
     var holder = accounts[0];
     var holder2 = accounts[1];
     var amount = 1;
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankAsset.transfer(holder2, amount);
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      return chronoBankAssetProxy.transfer(holder2, amount);
     }).then(function() {
       return chronoBankPlatform.balanceOf.call(holder2, SYMBOL);
     }).then(function(result) {
@@ -210,10 +208,10 @@ contract('ChronoBankAsset', function(accounts) {
     var holder2 = accounts[1];
     var balance2 = 100;
     var amount = 1;
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankAsset.transfer(holder2, balance2);
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      return chronoBankAssetProxy.transfer(holder2, balance2);
     }).then(function() {
-      return chronoBankAsset.transfer(holder2, amount);
+      return chronoBankAssetProxy.transfer(holder2, amount);
     }).then(function() {
       return chronoBankPlatform.balanceOf.call(holder2, SYMBOL);
     }).then(function(result) {
@@ -228,12 +226,10 @@ contract('ChronoBankAsset', function(accounts) {
     var holder2 = accounts[1];
     var amount = 100;
     var watcher;
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL);
-    }).then(function() {
-      eventsHelper.setupEvents(chronoBankAsset);
-      watcher = chronoBankAsset.Transfer();
-      return chronoBankAsset.transfer(holder2, amount);
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      eventsHelper.setupEvents(chronoBankAssetProxy);
+      watcher = chronoBankAssetProxy.Transfer();
+      return chronoBankAssetProxy.transfer(holder2, amount);
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);
     }).then(function(events) {
@@ -260,11 +256,9 @@ contract('ChronoBankAsset', function(accounts) {
     var holder2 = accounts[1];
     var amount = 100;
     var watcher;
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankPlatform.setEventsProxy(chronoBankAsset.address, SYMBOL);
-    }).then(function() {
-      eventsHelper.setupEvents(chronoBankAsset);
-      watcher = chronoBankAsset.Transfer();
+    return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
+      eventsHelper.setupEvents(chronoBankAssetProxy);
+      watcher = chronoBankAssetProxy.Transfer();
       return chronoBankPlatform.transfer(holder2, amount, SYMBOL);
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);
@@ -276,19 +270,19 @@ contract('ChronoBankAsset', function(accounts) {
     });
   });
 
-  it('should be possible to disable proxy', function() {
+  it('should not be possible to change proxy', function() {
     var holder = accounts[0];
     var holder2 = accounts[1];
     var balance2 = 100;
-    return chronoBankPlatform.setProxy(chronoBankAsset.address, true, SYMBOL).then(function() {
-      return chronoBankPlatform.setProxy(chronoBankAsset.address, false, SYMBOL);
+    return chronoBankPlatform.setProxy('0x1', SYMBOL).then(function() {
+      return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL);
     }).then(function() {
-      return chronoBankAsset.transfer(holder2, balance2);
+      return chronoBankAssetProxy.transfer(holder2, balance2);
     }).then(function() {
-      return chronoBankPlatform.balanceOf.call(holder2, SYMBOL);
+      return chronoBankPlatform.balanceOf(holder2, SYMBOL);
     }).then(function(result) {
       assert.equal(result.valueOf(), 0);
-      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+      return chronoBankPlatform.balanceOf(holder, SYMBOL);
     }).then(function(result) {
       assert.equal(result.valueOf(), VALUE);
     });

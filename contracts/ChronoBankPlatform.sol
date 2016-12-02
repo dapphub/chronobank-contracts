@@ -1,4 +1,4 @@
-pragma solidity ^0.4.4;
+pragma solidity 0.4.4;
 
 import "Owned.sol";
 
@@ -27,11 +27,6 @@ contract ChronoBankPlatform is Owned {
         mapping(uint => Wallet) wallets;
     }
 
-    struct ProxyConf {
-        address proxy;
-        mapping(address => bool) isProxy;
-    }
-
     struct Wallet {
         uint balance;
         mapping(uint => uint) allowance;
@@ -47,7 +42,7 @@ contract ChronoBankPlatform is Owned {
     // This is access address mapping. Many addresses may have access to a single holder.
     mapping(address => uint) holderIndex;
     mapping(bytes32 => Asset) public assets;
-    mapping(bytes32 => ProxyConf) public proxies;
+    mapping(bytes32 => address) public proxies;
 
     // Should use interface of the emitter, but address of events history.
     Emitter public eventsHistory;
@@ -73,7 +68,7 @@ contract ChronoBankPlatform is Owned {
     }
 
     modifier onlyProxy(bytes32 _symbol) {
-        if (proxies[_symbol].isProxy[msg.sender]) {
+        if (proxies[_symbol] == msg.sender) {
             _;
         } else {
             _error("Only proxy: access denied");
@@ -124,13 +119,11 @@ contract ChronoBankPlatform is Owned {
         return holders[_holderId].addr;
     }
 
-    function setProxy(address _address, bool enabled, bytes32 _symbol) onlyContractOwner() returns(bool) {
-        proxies[_symbol].isProxy[_address] = enabled;
-        return true;
-    }
-
-    function setEventsProxy(address _address, bytes32 _symbol) onlyContractOwner() returns(bool) {
-        proxies[_symbol].proxy = _address;
+    function setProxy(address _address, bytes32 _symbol) onlyContractOwner() returns(bool) {
+        if (proxies[_symbol] != 0x0) {
+            return false;
+        }
+        proxies[_symbol] = _address;
         return true;
     }
 
@@ -174,12 +167,11 @@ contract ChronoBankPlatform is Owned {
     }
 
     function _proxyTransferEvent(uint _fromId, uint _toId, uint _value, bytes32 _symbol) internal {
-        ProxyConf conf = proxies[_symbol];
-        if (conf.proxy != 0x0) {
+        if (proxies[_symbol] != 0x0) {
             // Internal Out Of Gas/Throw: revert this transaction too;
             // Call Stack Depth Limit reached: n/a after HF 4;
             // Recursive Call: safe, all changes already made.
-            Proxy(conf.proxy).emitTransfer(_address(_fromId), _address(_toId), _value);
+            Proxy(proxies[_symbol]).emitTransfer(_address(_fromId), _address(_toId), _value);
         }
     }
 
@@ -293,12 +285,11 @@ contract ChronoBankPlatform is Owned {
         // Call Stack Depth Limit reached: revert this transaction too;
         // Recursive Call: safe, all changes already made.
         eventsHistory.emitApprove(_address(_senderId), _address(_spenderId), _symbol, _value);
-        ProxyConf conf = proxies[_symbol];
-        if (conf.proxy != 0x0) {
+        if (proxies[_symbol] != 0x0) {
             // Internal Out Of Gas/Throw: revert this transaction too;
             // Call Stack Depth Limit reached: n/a after HF 4;
             // Recursive Call: safe, all changes already made.
-            Proxy(conf.proxy).emitApprove(_address(_senderId), _address(_spenderId), _value);
+            Proxy(proxies[_symbol]).emitApprove(_address(_senderId), _address(_spenderId), _value);
         }
         return true;
     }

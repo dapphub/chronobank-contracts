@@ -1,15 +1,17 @@
-pragma solidity ^0.4.4;
+pragma solidity 0.4.4;
 
 import "ChronoBankAsset.sol";
+import "Owned.sol";
 
-contract ChronoBankAssetWithFee is ChronoBankAsset {
+contract ChronoBankAssetWithFee is ChronoBankAsset, Owned {
     address public feeAddress;
+    uint constant FEE_PERCENT = 15; // 0.15%
 
-    modifier takeFee(address _from, uint _fromValue, bool[1] memory _success) {
-        if (_transferFee(_from, _fromValue)) {
+    modifier takeFee(address _from, uint _fromValue, address _sender, bool[1] memory _success) {
+        if (_transferFee(_from, _fromValue, _sender)) {
             _;
             if (!_success[0]) {
-                _returnFee(msg.sender, _fromValue);
+                _returnFee(_sender, _fromValue);
             }
         }
     }
@@ -19,51 +21,43 @@ contract ChronoBankAssetWithFee is ChronoBankAsset {
         return true;
     }
 
-    function transfer(address _to, uint _value) returns(bool) {
-        return _transferWithReference(_to, _value, "", [false]);
+    function _transferWithReference(address _to, uint _value, string _reference, address _sender) internal returns(bool) {
+        return _transferWithReference(_to, _value, _reference, _sender, [false]);
     }
 
-    function transferWithReference(address _to, uint _value, string _reference) returns(bool) {
-        return _transferWithReference(_to, _value, _reference, [false]);
-    }
-
-    function _transferWithReference(address _to, uint _value, string _reference, bool[1] memory _success) takeFee(msg.sender, _value, _success) internal returns(bool) {
-        _success[0] = super._transferWithReference(_to, _value, _reference);
+    function _transferWithReference(address _to, uint _value, string _reference, address _sender, bool[1] memory _success) takeFee(_sender, _value, _sender, _success) internal returns(bool) {
+        _success[0] = super._transferWithReference(_to, _value, _reference, _sender);
         return _success[0];
     }
 
-    function transferFrom(address _from, address _to, uint _value) returns(bool) {
-        return _transferFromWithReference(_from, _to, _value, "", [false]);
+    function _transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) internal returns(bool) {
+        return _transferFromWithReference(_from, _to, _value, _reference, _sender, [false]);
     }
 
-    function transferFromWithReference(address _from, address _to, uint _value, string _reference) returns(bool) {
-        return _transferFromWithReference(_from, _to, _value, _reference, [false]);
-    }
-
-    function _transferFromWithReference(address _from, address _to, uint _value, string _reference, bool[1] memory _success) takeFee(_from, _value, _success) internal returns(bool) {
-        _success[0] = super._transferFromWithReference(_from, _to, _value, _reference);
+    function _transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender, bool[1] memory _success) takeFee(_from, _value, _sender, _success) internal returns(bool) {
+        _success[0] = super._transferFromWithReference(_from, _to, _value, _reference, _sender);
         return _success[0];
     }
 
-    function _transferFee(address _feeFrom, uint _fromValue) internal returns(bool) {
+    function _transferFee(address _feeFrom, uint _fromValue, address _sender) internal returns(bool) {
         if (feeAddress == 0x0 || feeAddress == _feeFrom || _fromValue == 0) {
             return true;
         }
-        return chronoBankPlatform.proxyTransferFromWithReference(_feeFrom, feeAddress, calculateFee(_fromValue), symbol, "Transaction fee", msg.sender);
+        return super._transferFromWithReference(_feeFrom, feeAddress, calculateFee(_fromValue), "Transaction fee", _sender);
     }
 
     function _returnFee(address _to, uint _fromValue) internal {
         if (feeAddress == 0x0 || feeAddress == _to || _fromValue == 0) {
             return;
         }
-        if (!chronoBankPlatform.proxyTransferWithReference(_to, calculateFee(_fromValue), symbol, "Transaction fee return", feeAddress)) {
+        if (!super._transferWithReference(_to, calculateFee(_fromValue), "Transaction fee return", feeAddress)) {
             throw;
         }
     }
 
-    // 0.15% fee, round up.
+    // Round up.
     function calculateFee(uint _value) constant returns(uint) {
-        uint feeRaw = _value * 15;
+        uint feeRaw = _value * FEE_PERCENT;
         return (feeRaw / 10000) + (feeRaw % 10000 == 0 ? 0 : 1);
     }
 }
