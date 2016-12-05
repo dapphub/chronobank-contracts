@@ -10,8 +10,8 @@ contract ChronoBankAssetWithFee is ChronoBankAsset, Owned {
     modifier takeFee(address _from, uint _fromValue, address _sender, bool[1] memory _success) {
         if (_transferFee(_from, _fromValue, _sender)) {
             _;
-            if (!_success[0]) {
-                _returnFee(_from, _fromValue);
+            if (!_success[0] && _subjectToFees(_from, _fromValue)) {
+                throw;
             }
         }
     }
@@ -40,19 +40,14 @@ contract ChronoBankAssetWithFee is ChronoBankAsset, Owned {
     }
 
     function _transferFee(address _feeFrom, uint _fromValue, address _sender) internal returns(bool) {
-        if (feeAddress == 0x0 || feeAddress == _feeFrom || _fromValue == 0) {
+        if (!_subjectToFees(_feeFrom, _fromValue)) {
             return true;
         }
         return super._transferFromWithReference(_feeFrom, feeAddress, calculateFee(_fromValue), "Transaction fee", _sender);
     }
 
-    function _returnFee(address _to, uint _fromValue) internal {
-        if (feeAddress == 0x0 || feeAddress == _to || _fromValue == 0) {
-            return;
-        }
-        if (!super._transferWithReference(_to, calculateFee(_fromValue), "Transaction fee return", feeAddress)) {
-            throw;
-        }
+    function _subjectToFees(address _feeFrom, uint _fromValue) internal returns(bool) {
+        return (feeAddress != 0x0 && feeAddress != _feeFrom && _fromValue != 0);
     }
 
     // Round up.

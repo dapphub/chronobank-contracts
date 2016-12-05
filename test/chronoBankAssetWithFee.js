@@ -1221,7 +1221,9 @@ contract('ChronoBankAssetWithFee', function(accounts) {
     return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
       return chronoBankAsset.setupFee(feeAddress);
     }).then(function() {
-      return chronoBankAssetProxy.transfer(holder2, amount);
+      return chronoBankAssetProxy.transfer(holder2, amount)
+        .then(assert.fail)
+        .catch(() => {});
     }).then(function() {
       return chronoBankAssetProxy.balanceOf(holder);
     }).then(function(balance) {
@@ -1248,7 +1250,9 @@ contract('ChronoBankAssetWithFee', function(accounts) {
     }).then(function() {
       return chronoBankAssetProxy.approve(spender, feePercent);
     }).then(function() {
-      return chronoBankAssetProxy.transferFrom(holder, receiver, amount, {from: spender});
+      return chronoBankAssetProxy.transferFrom(holder, receiver, amount, {from: spender})
+        .then(assert.fail)
+        .catch(() => {});
     }).then(function() {
       return chronoBankAssetProxy.balanceOf(holder);
     }).then(function(balance) {
@@ -1259,6 +1263,9 @@ contract('ChronoBankAssetWithFee', function(accounts) {
       return chronoBankAssetProxy.balanceOf(feeAddress);
     }).then(function(balance) {
       assert.equal(balance.valueOf(), 0);
+      return chronoBankAssetProxy.allowance(holder, spender);
+    }).then(function(allowance) {
+      assert.equal(allowance.valueOf(), feePercent);
     });
   });
 });
