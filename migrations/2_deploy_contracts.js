@@ -7,4 +7,5 @@ module.exports = function(deployer) {
   deployer.deploy(ChronoBankAssetProxy);
   deployer.deploy(ChronoBankAsset);
   deployer.deploy(ChronoBankAssetWithFee);
+  deployer.deploy(Exchange);
 };
