@@ -47,7 +47,9 @@ contract ChronoBankAssetWithFee is ChronoBankAsset, Owned {
     }
 
     function _subjectToFees(address _feeFrom, uint _fromValue) internal returns(bool) {
-        return (feeAddress != 0x0 && feeAddress != _feeFrom && _fromValue != 0);
+        return feeAddress != 0x0
+            && feeAddress != _feeFrom
+            && _fromValue != 0;
     }
 
     // Round up.

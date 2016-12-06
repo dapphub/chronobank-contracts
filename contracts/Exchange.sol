@@ -1,12 +1,7 @@
 pragma solidity 0.4.4;
 
 import "Owned.sol";
-
-contract Asset {
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-}
+import {ERC20Interface as Asset} from "ERC20Interface.sol";
 
 contract Exchange is Owned {
     Asset public asset;
