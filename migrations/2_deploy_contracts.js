@@ -8,4 +8,5 @@ module.exports = function(deployer) {
   deployer.deploy(ChronoBankAsset);
   deployer.deploy(ChronoBankAssetWithFee);
   deployer.deploy(Exchange);
+  deployer.deploy(FakeCoin);
 };

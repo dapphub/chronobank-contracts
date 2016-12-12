@@ -8,12 +8,12 @@ contract Exchange is Owned {
     uint public buyPrice = 1;
     uint public sellPrice = 2;
 
-    event Sell(address indexed _who, uint _token, uint _eth);
-    event Buy(address indexed _who, uint _token, uint _eth);
-    event WithdrawTokens(address indexed _recipient, uint _amount);
-    event WithdrawEth(address indexed _recipient, uint _amount);
+    event Sell(address indexed who, uint token, uint eth);
+    event Buy(address indexed who, uint token, uint eth);
+    event WithdrawTokens(address indexed recipient, uint amount);
+    event WithdrawEth(address indexed recipient, uint amount);
 
-    function init(address _asset) returns(bool) {
+    function init(address _asset) onlyContractOwner() returns(bool) {
         if (address(asset) != 0x0) {
             return false;
         }
