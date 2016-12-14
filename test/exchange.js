@@ -14,13 +14,13 @@ contract('Exchange', (accounts) => {
 
   let assertBalance = (address, expectedBalance) => {
     return coin.balanceOf(address)
-      .then(balance => assert.equal(balance, expectedBalance));
+      .then((balance) => assert.equal(balance, expectedBalance));
   };
 
   let assertEthBalance = (address, expectedBalance) => {
     return Promise.resolve()
       .then(() => web3.eth.getBalance(address))
-      .then(balance => assert.equal(balance, expectedBalance));
+      .then((balance) => assert.equal(balance, expectedBalance));
   };
 
   let getTransactionCost = (hash) => {
@@ -43,28 +43,28 @@ contract('Exchange', (accounts) => {
   it('should receive the right contract address after init() call', () => {
     return exchange.init(coin.address)
       .then(() => exchange.asset())
-      .then(asset => assert.equal(asset, coin.address));
+      .then((asset) => assert.equal(asset, coin.address));
   });
 
   it('should not be possible to set another contract after first init() call', () => {
     return exchange.init(coin.address)
       .then(() => exchange.init('0x1'))
       .then(() => exchange.asset())
-      .then(asset => assert.equal(asset, coin.address));
+      .then((asset) => assert.equal(asset, coin.address));
   });
 
   it('should not be possible to init by non-owner', () => {
     return exchange.init(coin.address, {from: accounts[1]})
       .then(() => exchange.asset())
-      .then(asset => assert.equal(asset, '0x0000000000000000000000000000000000000000'));
+      .then((asset) => assert.equal(asset, '0x0000000000000000000000000000000000000000'));
   });
 
   it('should not be possible to set prices by non-owner', () => {
     return exchange.setPrices(10, 20, {from: accounts[1]})
       .then(() => exchange.buyPrice())
-      .then(buyPrice => assert.equal(buyPrice, BUY_PRICE))
+      .then((buyPrice) => assert.equal(buyPrice, BUY_PRICE))
       .then(() => exchange.sellPrice())
-      .then(sellPrice => assert.equal(sellPrice, SELL_PRICE));
+      .then((sellPrice) => assert.equal(sellPrice, SELL_PRICE));
   });
 
   it('should be possible to set new prices', () => {
@@ -73,9 +73,9 @@ contract('Exchange', (accounts) => {
 
     return exchange.setPrices(newBuyPrice, newSellPrice)
       .then(() => exchange.buyPrice())
-      .then(buyPrice => assert.equal(buyPrice, newBuyPrice))
+      .then((buyPrice) => assert.equal(buyPrice, newBuyPrice))
       .then(() => exchange.sellPrice())
-      .then(sellPrice => assert.equal(sellPrice, newSellPrice));
+      .then((sellPrice) => assert.equal(sellPrice, newSellPrice));
   });
 
   it('should not be possible to set prices sellPrice < buyPrice', () => {
@@ -84,9 +84,9 @@ contract('Exchange', (accounts) => {
 
     return exchange.setPrices(newBuyPrice, newSellPrice)
       .then(() => exchange.buyPrice())
-      .then(buyPrice => assert.equal(buyPrice, BUY_PRICE))
+      .then((buyPrice) => assert.equal(buyPrice, BUY_PRICE))
       .then(() => exchange.sellPrice())
-      .then(sellPrice => assert.equal(sellPrice, SELL_PRICE));
+      .then((sellPrice) => assert.equal(sellPrice, SELL_PRICE));
   });
 
   it('should not be possible to sell with price > buyPrice', () => {
