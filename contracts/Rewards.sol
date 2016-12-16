@@ -19,6 +19,15 @@ contract Rewards {
     mapping(address => uint) public rewardsLeft;
     Period[] periods;
 
+    // indexed amount for checking 0 deposit
+    event Deposit(address indexed who, uint indexed amount, uint indexed period);
+    event PeriodClosed();
+    event AssetRegistration(address indexed assetAddress, uint balance);
+    event CalculateReward(address indexed assetAddress, address indexed who, uint reward);
+    event WithdrawReward(address indexed assetAddress, address indexed who, uint amount);
+    event WithdrawShares(address indexed who, uint amount);
+    event Error(bytes32 message);
+
     function init(address _sharesContract, uint _closeIntervalDays) returns(bool) {
         // only once
         if (periods.length > 0) {
@@ -42,6 +51,7 @@ contract Rewards {
     function depositFor(address _address, uint _amount) returns(bool) {
         // try to transfer shares to contract
         if (_amount != 0 && !sharesContract.transferFrom(msg.sender, this, _amount)) {
+            Error("Shares transfer failed");
             return false;
         }
 
@@ -57,6 +67,7 @@ contract Rewards {
         }
         period.shares[_address] = shares[_address];
 
+        Deposit(_address, _amount, lastPeriod());
         return true;
     }
 
@@ -65,6 +76,7 @@ contract Rewards {
         // this can be done only once per period
         Period period = periods[lastPeriod()];
         if ((period.startDate + (closeInterval * 1 days)) > now) {
+            Error("Cannot close period yet");
             return false;
         }
 
@@ -74,17 +86,21 @@ contract Rewards {
         periods.length++;
         periods[lastPeriod()].startDate = now;
 
+        PeriodClosed();
         return true;
     }
 
     function registerAsset(address _assetAddress) returns(bool) {
         Period period = periods[lastClosedPeriod()];
         if (period.assetBalances[_assetAddress] != 0) {
+            Error("Asset is already registered");
             return false;
         }
 
         period.assetBalances[_assetAddress] = Asset(_assetAddress).balanceOf(this) - rewardsLeft[_assetAddress];
         rewardsLeft[_assetAddress] += period.assetBalances[_assetAddress];
+
+        AssetRegistration(_assetAddress, period.assetBalances[_assetAddress]);
         return true;
     }
 
@@ -104,22 +120,27 @@ contract Rewards {
         // calculate user reward if not calculated
         Period period = periods[_period];
         if (!isClosed(_period) || period.assetBalances[_assetAddress] == 0) {
+            Error("Reward calculation failed");
             return false;
         }
 
         if (period.calculated[_assetAddress][_address]) {
+            Error("Reward is already calculated");
             return false;
         }
 
-        rewards[_assetAddress][_address] += period.assetBalances[_assetAddress] * period.shares[_address] / period.totalShares;
+        uint reward = period.assetBalances[_assetAddress] * period.shares[_address] / period.totalShares;
+        rewards[_assetAddress][_address] += reward;
         period.calculated[_assetAddress][_address] = true;
 
+        CalculateReward(_assetAddress, _address, reward);
         return true;
     }
 
     function withdrawShares(uint _amount) returns(bool) {
         deposit(0);
         if (_amount > shares[msg.sender]) {
+            Error("Insufficient balance");
             return false;
         }
 
@@ -133,6 +154,7 @@ contract Rewards {
             throw;
         }
 
+        WithdrawShares(msg.sender, _amount);
         return true;
     }
 
@@ -150,6 +172,7 @@ contract Rewards {
 
     function withdrawRewardFor(address _assetAddress, address _address, uint _amount) returns(bool) {
         if (rewardsLeft[_assetAddress] == 0) {
+            Error("No rewards left");
             return false;
         }
 
@@ -157,6 +180,7 @@ contract Rewards {
 
         uint startBalance = assetContract.balanceOf(this);
         if (!assetContract.transfer(_address, _amount)) {
+            Error("Asset transfer failed");
             return false;
         }
 
@@ -168,6 +192,8 @@ contract Rewards {
 
         rewards[_assetAddress][_address] -= diff;
         rewardsLeft[_assetAddress] -= diff;
+
+        WithdrawReward(_assetAddress, _address, _amount);
         return true;
     }
 

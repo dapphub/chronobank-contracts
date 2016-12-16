@@ -169,7 +169,7 @@ contract ChronoBankAssetProxy {
         if (pendingVersion == 0x0) {
             return false;
         }
-        if (pendingVersionTimestamp + UPGRADE_FREEZE_TIME < now) {
+        if (pendingVersionTimestamp + UPGRADE_FREEZE_TIME > now) {
             return false;
         }
         latestVersion = pendingVersion;
