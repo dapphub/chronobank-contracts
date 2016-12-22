@@ -1,4 +1,4 @@
-pragma solidity 0.4.4;
+pragma solidity ^0.4.4;
 
 import {ERC20Interface as Asset} from "ERC20Interface.sol";
 

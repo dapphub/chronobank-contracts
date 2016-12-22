@@ -1,4 +1,4 @@
-pragma solidity 0.4.4;
+pragma solidity ^0.4.4;
 
 contract FakeCoin {
     mapping(address => uint) public balanceOf;

@@ -1,4 +1,4 @@
-pragma solidity 0.4.4;
+pragma solidity ^0.4.4;
 
 contract ChronoBankAssetInterface {
     function __transferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
