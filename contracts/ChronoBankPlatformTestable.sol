@@ -11,6 +11,10 @@ contract ChronoBankPlatformTestable is ChronoBankPlatform {
         return _transfer(getHolderId(msg.sender), _createHolderId(_to), _value, _symbol, _reference, getHolderId(msg.sender));
     }
 
+    function approve(address _spender, uint _value, bytes32 _symbol) returns(bool) {
+        return _approve(_createHolderId(_spender), _value, _symbol, _createHolderId(msg.sender));
+    }
+
     function transferFrom(address _from, address _to, uint _value, bytes32 _symbol) returns(bool) {
         return transferFromWithReference(_from, _to, _value, _symbol, "");
     }

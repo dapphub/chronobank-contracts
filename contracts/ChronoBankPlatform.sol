@@ -294,10 +294,6 @@ contract ChronoBankPlatform is Owned {
         return true;
     }
 
-    function approve(address _spender, uint _value, bytes32 _symbol) returns(bool) {
-        return _approve(_createHolderId(_spender), _value, _symbol, _createHolderId(msg.sender));
-    }
-
     function proxyApprove(address _spender, uint _value, bytes32 _symbol, address _sender) onlyProxy(_symbol) returns(bool) {
         return _approve(_createHolderId(_spender), _value, _symbol, _createHolderId(_sender));
     }
