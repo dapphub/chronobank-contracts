@@ -1,0 +1,11 @@
+sudo: required
+dist: trusty
+language: node_js
+node_js: 6
+before_install:
+  - "npm install -g ethereumjs-testrpc@3.0.3"
+  - "npm install -g truffle@2.1.1"
+install:
+  - "testrpc > /dev/null &"
+script:
+  - "truffle test"
