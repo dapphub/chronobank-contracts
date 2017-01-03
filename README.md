@@ -1,7 +1,7 @@
-# SmartContracts
+# SmartContracts [![Build Status](https://travis-ci.org/ChronoBank/SmartContracts.svg?branch=master)](https://travis-ci.org/ChronoBank/SmartContracts)
 Labour Hours contracts.
 
-## Testing <img src="https://travis-ci.org/ChronoBank/SmartContracts.svg?branch=master" />
+## Testing
 NodeJS 6+ required.
 ```bash
 npm install -g ethereumjs-testrpc
