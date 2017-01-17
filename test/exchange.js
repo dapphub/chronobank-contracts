@@ -160,6 +160,13 @@ contract('Exchange', (accounts) => {
       );
   });
 
+  it('should not be possible to buy if _amount * _price overflows', () => {
+    return exchange.init(coin.address)
+      .then(() => exchange.buy(2, web3.toBigNumber(2).pow(255), {value: 0})
+        .then(assert.fail, () => {})
+      );
+  });
+
   it('should buy tokens with msg.value == _amount * _price', () => {
     let buyAmount = 50;
     return exchange.init(coin.address)

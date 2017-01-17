@@ -42,7 +42,7 @@ contract Exchange is Owned {
             return false;
         }
 
-        uint total = _amount * _price;
+        uint total = _mul(_amount, _price);
         if (this.balance < total) {
             return false;
         }
@@ -65,7 +65,7 @@ contract Exchange is Owned {
             throw;
         }
 
-        uint total = _amount * _price;
+        uint total = _mul(_amount, _price);
         if (msg.value != total) {
             throw;
         }
@@ -117,6 +117,17 @@ contract Exchange is Owned {
             throw;
         }
         return true;
+    }
+
+    function _mul(uint _a, uint _b) internal constant returns(uint) {
+        if (_a == 0 || _b == 0) {
+            return 0;
+        }
+        uint result = _a * _b;
+        if (result < _a || result < _b) {
+            throw;
+        }
+        return result;
     }
     
     function() payable {}
