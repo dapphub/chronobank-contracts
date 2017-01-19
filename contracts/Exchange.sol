@@ -120,15 +120,12 @@ contract Exchange is Owned {
     }
 
     function _mul(uint _a, uint _b) internal constant returns(uint) {
-        if (_a == 0 || _b == 0) {
-            return 0;
-        }
         uint result = _a * _b;
-        if (result < _a || result < _b) {
+        if (_a != 0 && result / _a != _b) {
             throw;
         }
         return result;
     }
     
-    function() payable {}
+    function () payable {}
 }
