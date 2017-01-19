@@ -1146,8 +1146,9 @@ contract('ChronoBankAssetWithFee', function(accounts) {
     var feeAddress = accounts[2];
     var amount = 1;
     var feeMin = 1;
+    var feePercent = 1; // 0.01 * 100;
     return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
-      return chronoBankAsset.setupFee(feeAddress);
+      return chronoBankAsset.setupFee(feeAddress, feePercent);
     }).then(function() {
       return chronoBankAssetProxy.transfer(holder2, amount);
     }).then(function() {
@@ -1167,11 +1168,11 @@ contract('ChronoBankAssetWithFee', function(accounts) {
     var holder2 = accounts[1];
     var feeAddress = accounts[2];
     var amount = 10000;
-    var feePercent = 15; // 0.15 * 100;
+    var feePercent = 10; // 0.10 * 100;
     return chronoBankPlatform.reissueAsset(SYMBOL, amount).then(function() {
       return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL);
     }).then(function() {
-      return chronoBankAsset.setupFee(feeAddress);
+      return chronoBankAsset.setupFee(feeAddress, feePercent);
     }).then(function() {
       return chronoBankAssetProxy.transfer(holder2, amount);
     }).then(function() {
@@ -1192,11 +1193,11 @@ contract('ChronoBankAssetWithFee', function(accounts) {
     var receiver = accounts[2];
     var feeAddress = accounts[3];
     var amount = 10000;
-    var feePercent = 15; // 0.15 * 100;
+    var feePercent = 10; // 0.10 * 100;
     return chronoBankPlatform.reissueAsset(SYMBOL, amount).then(function() {
       return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL);
     }).then(function() {
-      return chronoBankAsset.setupFee(feeAddress);
+      return chronoBankAsset.setupFee(feeAddress, feePercent);
     }).then(function() {
       return chronoBankAssetProxy.approve(spender, amount + feePercent);
     }).then(function() {
@@ -1218,8 +1219,9 @@ contract('ChronoBankAssetWithFee', function(accounts) {
     var holder2 = accounts[1];
     var feeAddress = accounts[2];
     var amount = VALUE;
+    var feePercent = 10; // 0.10 * 100;
     return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
-      return chronoBankAsset.setupFee(feeAddress);
+      return chronoBankAsset.setupFee(feeAddress, feePercent);
     }).then(function() {
       return chronoBankAssetProxy.transfer(holder2, amount)
         .then(assert.fail)
@@ -1242,11 +1244,11 @@ contract('ChronoBankAssetWithFee', function(accounts) {
     var receiver = accounts[2];
     var feeAddress = accounts[3];
     var amount = 10000;
-    var feePercent = 15; // 0.15 * 100;
+    var feePercent = 10; // 0.10 * 100;
     return chronoBankPlatform.reissueAsset(SYMBOL, amount).then(function() {
       return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL);
     }).then(function() {
-      return chronoBankAsset.setupFee(feeAddress);
+      return chronoBankAsset.setupFee(feeAddress, feePercent);
     }).then(function() {
       return chronoBankAssetProxy.approve(spender, feePercent);
     }).then(function() {

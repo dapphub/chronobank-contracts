@@ -5,7 +5,7 @@ import "Owned.sol";
 
 contract ChronoBankAssetWithFee is ChronoBankAsset, Owned {
     address public feeAddress;
-    uint constant FEE_PERCENT = 15; // 0.15%
+    uint32 public feePercent; // 10 is 0.1%
 
     modifier takeFee(address _from, uint _fromValue, address _sender, bool[1] memory _success) {
         if (_transferFee(_from, _fromValue, _sender)) {
@@ -16,8 +16,12 @@ contract ChronoBankAssetWithFee is ChronoBankAsset, Owned {
         }
     }
 
-    function setupFee(address _feeAddress) onlyContractOwner() returns(bool) {
+    function setupFee(address _feeAddress, uint32 _feePercent) onlyContractOwner() returns(bool) {
+        if (feeAddress != 0x0) {
+            return false;
+        }
         feeAddress = _feeAddress;
+        feePercent = _feePercent;
         return true;
     }
 
@@ -54,7 +58,7 @@ contract ChronoBankAssetWithFee is ChronoBankAsset, Owned {
 
     // Round up.
     function calculateFee(uint _value) constant returns(uint) {
-        uint feeRaw = _value * FEE_PERCENT;
+        uint feeRaw = _value * feePercent;
         return (feeRaw / 10000) + (feeRaw % 10000 == 0 ? 0 : 1);
     }
 }
