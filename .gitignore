@@ -1,0 +1,10 @@
+!/build/*
+.tern-port
+.DS_Store
+node_modules/
+
+*.log
+*.bac
+
+/build
+.truffle-solidity-loader
