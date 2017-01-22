@@ -1,9 +1,8 @@
 pragma solidity ^0.4.4;
 
-import "./zeppelin/ownership/Shareable.sol";
 import "Configurable.sol";
 
-contract Managed is Configurable, Shareable {
+contract Managed is Configurable {
   enum Vote {accept, revoke, deploy}
   enum Operations {createLOC,editLOC}
   Vote vote;
