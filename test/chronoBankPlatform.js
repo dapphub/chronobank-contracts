@@ -43,6 +43,10 @@ contract('ChronoBankPlatform', function(accounts) {
     }).then(function() {
       return eventsHistory.addEmitter(chronoBankPlatformEmitterAbi.emitOwnershipChange.getData.apply(this, fakeArgs).slice(0, 10), chronoBankPlatformEmitter.address);
     }).then(function() {
+      return eventsHistory.addEmitter(chronoBankPlatformEmitterAbi.emitRecovery.getData.apply(this, fakeArgs).slice(0, 10), chronoBankPlatformEmitter.address);
+    }).then(function() {
+      return eventsHistory.addEmitter(chronoBankPlatformEmitterAbi.emitApprove.getData.apply(this, fakeArgs).slice(0, 10), chronoBankPlatformEmitter.address);
+    }).then(function() {
       return eventsHistory.addEmitter(chronoBankPlatformEmitterAbi.emitError.getData.apply(this, fakeArgs).slice(0, 10), chronoBankPlatformEmitter.address);
     }).then(function() {
       eventsHistory = ChronoBankPlatformEmitter.at(eventsHistory.address);
@@ -1533,6 +1537,1534 @@ contract('ChronoBankPlatform', function(accounts) {
       return chronoBankPlatform.totalSupply.call(SYMBOL);
     }).then(function(result) {
       assert.equal(result.valueOf(), value);
+    });
+  });
+
+  it('should not be possible to trust to already trusted address', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    return chronoBankPlatform.trust(trustee).then(function() {
+      return chronoBankPlatform.trust.call(trustee);
+    }).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should not be possible to trust to oneself', function() {
+    var holder = accounts[0];
+    return chronoBankPlatform.trust.call(holder).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should be possible to trust by existing holder', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust.call(trustee);
+    }).then(function(result) {
+      assert.isTrue(result);
+    });
+  });
+  it('should be possible to trust by missing holder', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    return chronoBankPlatform.trust.call(trustee).then(function(result) {
+      assert.isTrue(result);
+    });
+  });
+  it('should be possible to trust to multiple addresses', function() {
+    var holder = accounts[0];
+    var trustee1 = accounts[1];
+    var trustee2 = accounts[2];
+    return chronoBankPlatform.trust(trustee1).then(function(result) {
+      return chronoBankPlatform.trust(trustee2);
+    }).then(function() {
+      return chronoBankPlatform.isTrusted.call(holder, trustee1);
+    }).then(function(result) {
+      assert.isTrue(result);
+      return chronoBankPlatform.isTrusted.call(holder, trustee2);
+    }).then(function(result) {
+      assert.isTrue(result);
+    });
+  });
+
+  it('should not be possible to distrust an untrusted address', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var untrustee = accounts[2];
+    return chronoBankPlatform.trust(trustee).then(function() {
+      return chronoBankPlatform.distrust.call(untrustee);
+    }).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should not be possible to distrust by missing holder', function() {
+    var holder = accounts[0];
+    var untrustee = accounts[1];
+    return chronoBankPlatform.distrust.call(untrustee).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should not be possible to distrust oneself', function() {
+    var holder = accounts[0];
+    return chronoBankPlatform.distrust.call(holder).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should be possible to distrust a trusted address', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    return chronoBankPlatform.trust(trustee).then(function() {
+      return chronoBankPlatform.distrust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.isTrusted.call(holder, trustee);
+    }).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should be possible to distrust a last trusted address', function() {
+    var holder = accounts[0];
+    var trustee1 = accounts[1];
+    var trustee2 = accounts[2];
+    return chronoBankPlatform.trust(trustee1).then(function() {
+      return chronoBankPlatform.trust(trustee2);
+    }).then(function() {
+      return chronoBankPlatform.distrust(trustee2);
+    }).then(function() {
+      return chronoBankPlatform.isTrusted.call(holder, trustee2);
+    }).then(function(result) {
+      assert.isFalse(result);
+      return chronoBankPlatform.isTrusted.call(holder, trustee1);
+    }).then(function(result) {
+      assert.isTrue(result);
+    });
+  });
+  it('should be possible to distrust a not last trusted address', function() {
+    var holder = accounts[0];
+    var trustee1 = accounts[1];
+    var trustee2 = accounts[2];
+    return chronoBankPlatform.trust(trustee1).then(function() {
+      return chronoBankPlatform.trust(trustee2);
+    }).then(function() {
+      return chronoBankPlatform.distrust(trustee1);
+    }).then(function() {
+      return chronoBankPlatform.isTrusted.call(holder, trustee1);
+    }).then(function(result) {
+      assert.isFalse(result);
+      return chronoBankPlatform.isTrusted.call(holder, trustee2);
+    }).then(function(result) {
+      assert.isTrue(result);
+    });
+  });
+
+  it('should not be possible to recover to existing holder', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[2];
+    return chronoBankPlatform.trust(trustee).then(function() {
+      return chronoBankPlatform.trust(accounts[3], {from: recoverTo});
+    }).then(function() {
+      return chronoBankPlatform.recover.call(holder, recoverTo, {from: trustee});
+    }).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should not be possible to recover by untrusted', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var untrustee = accounts[2];
+    var recoverTo = accounts[3];
+    return chronoBankPlatform.trust(trustee).then(function() {
+      return chronoBankPlatform.recover.call(holder, recoverTo, {from: untrustee});
+    }).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should not be possible to recover from missing holder', function() {
+    var holder = accounts[0];
+    var untrustee = accounts[2];
+    var recoverTo = accounts[3];
+    return chronoBankPlatform.recover.call(holder, recoverTo, {from: untrustee}).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should not be possible to recover by oneself', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[3];
+    return chronoBankPlatform.trust(trustee).then(function() {
+      return chronoBankPlatform.recover.call(holder, recoverTo, {from: holder});
+    }).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should not be possible to recover to oneself', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    return chronoBankPlatform.trust(trustee).then(function() {
+      return chronoBankPlatform.recover.call(holder, holder, {from: trustee});
+    }).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+  it('should not be possible to recover to the same address', function() {
+    // Covered by 'should not be possible to recover to oneself'.
+  });
+  it('should not be possible to do transfer by target after failed recovery', function() {
+    var holder = accounts[0];
+    var untrustee = accounts[2];
+    var recoverTo = accounts[3];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: untrustee});
+    }).then(function() {
+      return chronoBankPlatform.transfer(untrustee, 100, SYMBOL, {from: recoverTo});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(untrustee, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE);
+    });
+  });
+  it('should be possible to do transfer by holder after failed recovery', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var untrustee = accounts[2];
+    var recoverTo = accounts[3];
+    var amount = 100;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: untrustee});
+    }).then(function() {
+      return chronoBankPlatform.transfer(untrustee, amount, SYMBOL, {from: holder});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(untrustee, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), amount);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+    });
+  });
+  it('should be possible to recover', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[2];
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      watcher = eventsHistory.Recovery();
+      eventsHelper.setupEvents(eventsHistory);
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 1);
+      assert.equal(events[0].args.from.valueOf(), holder);
+      assert.equal(events[0].args.to.valueOf(), recoverTo);
+      assert.equal(events[0].args.by.valueOf(), trustee);
+      return chronoBankPlatform.balanceOf.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE);
+    });
+  });
+  it('should be possible to recover multiple times', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[2];
+    var recoverTo2 = accounts[3];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.recover(recoverTo, recoverTo2, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(recoverTo2, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE);
+    });
+  });
+  it('should be possible to recover recovered address', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[2];
+    var recoverTo2 = accounts[3];
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      watcher = eventsHistory.Recovery();
+      eventsHelper.setupEvents(eventsHistory);
+      return chronoBankPlatform.recover(holder, recoverTo2, {from: trustee});
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 1);
+      assert.equal(events[0].args.from.valueOf(), recoverTo);
+      assert.equal(events[0].args.to.valueOf(), recoverTo2);
+      assert.equal(events[0].args.by.valueOf(), trustee);
+      return chronoBankPlatform.balanceOf.call(recoverTo2, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE);
+    });
+  });
+  it('should be possible to do transfers after recovery by holder', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var untrustee = accounts[2];
+    var recoverTo = accounts[3];
+    var amount = 100;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.transfer(untrustee, amount, SYMBOL, {from: holder});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(untrustee, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), amount);
+      return chronoBankPlatform.balanceOf.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+    });
+  });
+  it('should be possible to reissue after recovery', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[3];
+    var amount = 100;
+    var isReissuable = true;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, isReissuable).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.reissueAsset(SYMBOL, amount, {from: recoverTo});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE + amount);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE + amount);
+    });
+  });
+  it('should be possible to revoke after recovery', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[3];
+    var amount = 100;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.revokeAsset(SYMBOL, amount, {from: recoverTo});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+    });
+  });
+  it('should be possible to change ownership after recovery', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var newOwner = accounts[2];
+    var recoverTo = accounts[3];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.changeOwnership(SYMBOL, newOwner, {from: recoverTo});
+    }).then(function() {
+      return chronoBankPlatform.owner.call(SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), newOwner);
+      return chronoBankPlatform.isOwner.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.isFalse(result.valueOf());
+      return chronoBankPlatform.isOwner.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.isFalse(result.valueOf());
+    });
+  });
+  it('should be possible to reissue after recovery by holder', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[3];
+    var amount = 100;
+    var isReissuable = true;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, isReissuable).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.reissueAsset(SYMBOL, amount);
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE + amount);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE + amount);
+    });
+  });
+  it('should be possible to revoke after recovery by holder', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[3];
+    var amount = 100;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.revokeAsset(SYMBOL, amount);
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+    });
+  });
+  it('should be possible to change ownership after recovery by holder', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var newOwner = accounts[2];
+    var recoverTo = accounts[3];
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      watcher = eventsHistory.OwnershipChange();
+      eventsHelper.setupEvents(eventsHistory);
+      return chronoBankPlatform.changeOwnership(SYMBOL, newOwner, {from: holder});
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 1);
+      assert.equal(events[0].args.from.valueOf(), recoverTo);
+      assert.equal(events[0].args.to.valueOf(), newOwner);
+      assert.equal(events[0].args.symbol.valueOf(), SYMBOL);
+      return chronoBankPlatform.owner.call(SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), newOwner);
+      return chronoBankPlatform.isOwner.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.isFalse(result.valueOf());
+      return chronoBankPlatform.isOwner.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.isFalse(result.valueOf());
+    });
+  });
+  it('should be possible to do transfers after recovery by recovered address', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var untrustee = accounts[2];
+    var recoverTo = accounts[3];
+    var amount = 100;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.transfer(untrustee, amount, SYMBOL, {from: recoverTo});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(untrustee, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), amount);
+      return chronoBankPlatform.balanceOf.call(recoverTo, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+    });
+  });
+  it('should recover asset ownership', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[2];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.owner.call(SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), recoverTo);
+    });
+  });
+  it('should recover balances', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[2];
+    var symbol1 = bytes32(31);
+    var symbol2 = bytes32(32);
+    var value1 = 100;
+    var value2 = 200;
+    return chronoBankPlatform.issueAsset(symbol1, value1, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.issueAsset(symbol2, value2, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE);
+    }).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(recoverTo, symbol1);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value1);
+      return chronoBankPlatform.balanceOf.call(recoverTo, symbol2);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value2);
+    });
+  });
+  it('should recover allowances', function() {
+    var holder = accounts[0];
+    var trustee = accounts[1];
+    var recoverTo = accounts[2];
+    var symbol1 = bytes32(31);
+    var symbol2 = bytes32(32);
+    var spender1 = accounts[3];
+    var spender2 = accounts[4];
+    var value1 = 100;
+    var value2 = 200;
+    return chronoBankPlatform.issueAsset(symbol1, value1, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.issueAsset(symbol2, value2, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender1, value1, symbol1);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender2, value2, symbol2);
+    }).then(function() {
+      return chronoBankPlatform.trust(trustee);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(recoverTo, spender1, symbol1);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value1);
+      return chronoBankPlatform.allowance.call(recoverTo, spender2, symbol2);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value2);
+    });
+  });
+  it('should recover trusts', function() {
+    var holder = accounts[0];
+    var trustee1 = accounts[1];
+    var trustee2 = accounts[2];
+    var recoverTo = accounts[3];
+    var untrustee = accounts[5];
+    return chronoBankPlatform.trust(trustee1).then(function() {
+      return chronoBankPlatform.trust(trustee2);
+    }).then(function() {
+      return chronoBankPlatform.recover(holder, recoverTo, {from: trustee1});
+    }).then(function() {
+      return chronoBankPlatform.isTrusted.call(recoverTo, trustee1);
+    }).then(function(result) {
+      assert.isTrue(result);
+      return chronoBankPlatform.isTrusted.call(recoverTo, trustee2);
+    }).then(function(result) {
+      assert.isTrue(result);
+      return chronoBankPlatform.isTrusted.call(recoverTo, untrustee);
+    }).then(function(result) {
+      assert.isFalse(result);
+    });
+  });
+
+  it('should not be possible to set allowance for missing symbol', function() {
+    var owner = accounts[0];
+    var spender = accounts[1];
+    var missingSymbol = bytes32(33);
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      eventsHelper.setupEvents(eventsHistory);
+      watcher = eventsHistory.Approve();
+      return chronoBankPlatform.approve(spender, 100, missingSymbol);
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 0);
+      return chronoBankPlatform.allowance.call(owner, spender, missingSymbol);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should not be possible to set allowance for missing symbol for oneself', function() {
+    var owner = accounts[0];
+    var missingSymbol = bytes32(33);
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      eventsHelper.setupEvents(eventsHistory);
+      watcher = eventsHistory.Approve();
+      return chronoBankPlatform.approve(owner, 100, missingSymbol);
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 0);
+      return chronoBankPlatform.allowance.call(owner, owner, missingSymbol);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should not be possible to set allowance for oneself', function() {
+    var owner = accounts[0];
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      eventsHelper.setupEvents(eventsHistory);
+      watcher = eventsHistory.Approve();
+      return chronoBankPlatform.approve(owner, 100, SYMBOL);
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 0);
+      return chronoBankPlatform.allowance.call(owner, owner, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should be possible to set allowance from missing holder to missing holder', function() {
+    var holder = accounts[1];
+    var spender = accounts[2];
+    var value = 100;
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      eventsHelper.setupEvents(eventsHistory);
+      watcher = eventsHistory.Approve();
+      return chronoBankPlatform.approve(spender, value, SYMBOL, {from: holder});
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 1);
+      assert.equal(events[0].args.from.valueOf(), holder);
+      assert.equal(events[0].args.spender.valueOf(), spender);
+      assert.equal(events[0].args.symbol.valueOf(), SYMBOL);
+      assert.equal(events[0].args.value.valueOf(), value);
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to set allowance from missing holder to existing holder', function() {
+    var holder = accounts[1];
+    var spender = accounts[0];
+    var value = 100;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL, {from: holder});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to set allowance from existing holder to missing holder', function() {
+    var holder = accounts[0];
+    var spender = accounts[2];
+    var value = 100;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL, {from: holder});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to set allowance from existing holder to existing holder', function() {
+    var holder = accounts[0];
+    var spender = accounts[2];
+    var value = 100;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transfer(spender, 1, SYMBOL, {from: holder});
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL, {from: holder});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to set allowance value 0', function() {
+    // Covered by 'should be possible to override allowance value with 0 value'.
+  });
+  it('should be possible to set allowance with (2**256 - 1) value', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = UINT_256_MINUS_1;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to set allowance value less then balance', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 1;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to set allowance value equal to balance', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = VALUE;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to set allowance value more then balance', function() {
+    // Covered by 'should be possible to set allowance with (2**256 - 1) value'.
+  });
+  it('should be possible to override allowance value with 0 value', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, 100, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to override allowance value with non 0 value', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 1000;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, 100, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should not affect balance when setting allowance', function() {
+    var holder = accounts[0];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(accounts[1], 100, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE);
+    });
+  });
+  it('should be possible to set allowance', function() {
+    // Covered by other tests above.
+  });
+
+  it('should not be possible to do allowance transfer by not allowed existing spender, from existing holder', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 100;
+    var expectedSpenderBalance = 100;
+    var expectedHolderBalance = VALUE - value;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transfer(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, 50, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedSpenderBalance);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+    });
+  });
+  it('should not be possible to do allowance transfer by not allowed existing spender, from missing holder', function() {
+    var holder = accounts[2];
+    var spender = accounts[1];
+    var value = 100;
+    var expectedSpenderBalance = 100;
+    var expectedHolderBalance = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transfer(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, 50, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedSpenderBalance);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+    });
+  });
+  it('should not be possible to do allowance transfer by not allowed missing spender, from existing holder', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var expectedSpenderBalance = 0;
+    var expectedHolderBalance = VALUE;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, 50, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedSpenderBalance);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+    });
+  });
+  it('should not be possible to do allowance transfer by not allowed missing spender, from missing holder', function() {
+    var holder = accounts[2];
+    var spender = accounts[1];
+    var expectedSpenderBalance = 0;
+    var expectedHolderBalance = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, 50, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedSpenderBalance);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+    });
+  });
+  it('should not be possible to do allowance transfer from and to the same holder', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, 50, SYMBOL);
+    }).then(function() {
+      eventsHelper.setupEvents(eventsHistory);
+      watcher = eventsHistory.Transfer();
+      return chronoBankPlatform.transferFrom(holder, holder, 50, SYMBOL, {from: spender});
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 0);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE);
+    });
+  });
+  it('should be possible to do allowance transfer from oneself', function() {
+    var holder = accounts[0];
+    var receiver = accounts[1];
+    var amount = 50;
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transferFrom(holder, receiver, amount, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE - amount);
+      return chronoBankPlatform.balanceOf.call(receiver, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), amount);
+    });
+  });
+  it('should not be possible to do allowance transfer with 0 value', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 0;
+    var resultValue = 0;
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, 100, SYMBOL);
+    }).then(function() {
+      eventsHelper.setupEvents(eventsHistory);
+      watcher = eventsHistory.Transfer();
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 0);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), VALUE);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+    });
+  });
+  it('should not be possible to do allowance transfer with value less than balance, more than allowed', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 1000;
+    var value = 999;
+    var allowed = 998;
+    var resultValue = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), balance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+    });
+  });
+  it('should not be possible to do allowance transfer with value equal to balance, more than allowed', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 1000;
+    var value = 1000;
+    var allowed = 999;
+    var resultValue = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), balance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+    });
+  });
+  it('should not be possible to do allowance transfer with value more than balance, less than allowed', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 199;
+    var value = 200;
+    var allowed = 201;
+    var resultValue = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), balance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+    });
+  });
+  it('should not be possible to do allowance transfer with value less than balance, more than allowed after another tranfer', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 102;
+    var anotherValue = 10;
+    var value = 91;
+    var allowed = 100;
+    var expectedHolderBalance = balance - anotherValue;
+    var resultValue = anotherValue;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, anotherValue, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+    });
+  });
+  it('should not be possible to do allowance transfer with missing symbol when allowed for another symbol', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 1000;
+    var value = 200;
+    var allowed = 1000;
+    var missingSymbol = bytes32(33);
+    var resultValue = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, missingSymbol, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), balance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+      return chronoBankPlatform.balanceOf.call(holder, missingSymbol);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+      return chronoBankPlatform.balanceOf.call(spender, missingSymbol);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should not be possible to do allowance transfer when allowed for another symbol', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 1000;
+    var value = 200;
+    var allowed = 1000;
+    var symbol2 = bytes32(2);
+    var resultValue = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.issueAsset(symbol2, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, symbol2, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), balance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+      return chronoBankPlatform.balanceOf.call(holder, symbol2);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), balance);
+      return chronoBankPlatform.balanceOf.call(spender, symbol2);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should not be possible to do allowance transfer with missing symbol when not allowed', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 1000;
+    var value = 200;
+    var missingSymbol = bytes32(33);
+    var resultValue = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, missingSymbol, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), balance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+      return chronoBankPlatform.balanceOf.call(holder, missingSymbol);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+      return chronoBankPlatform.balanceOf.call(spender, missingSymbol);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should be possible to do allowance transfer by allowed existing spender', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var existValue = 100;
+    var value = 300;
+    var expectedHolderBalance = VALUE - existValue - value;
+    var expectedSpenderBalance = existValue + value;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transfer(spender, existValue, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedSpenderBalance);
+    });
+  });
+  it('should be possible to do allowance transfer by allowed missing spender', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 300;
+    var expectedHolderBalance = VALUE - value;
+    var expectedSpenderBalance = value;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedSpenderBalance);
+    });
+  });
+  it('should be possible to do allowance transfer to oneself', function() {
+    // Covered by 'should be possible to do allowance transfer by allowed existing spender'.
+  });
+  it('should be possible to do allowance transfer to existing holder', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var receiver = accounts[2];
+    var existValue = 100;
+    var value = 300;
+    var expectedHolderBalance = VALUE - existValue - value;
+    var expectedReceiverBalance = existValue + value;
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transfer(receiver, existValue, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      eventsHelper.setupEvents(eventsHistory);
+      watcher = eventsHistory.Transfer();
+      return chronoBankPlatform.transferFrom(holder, receiver, value, SYMBOL, {from: spender});
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 1);
+      assert.equal(events[0].args.from.valueOf(), holder);
+      assert.equal(events[0].args.to.valueOf(), receiver);
+      assert.equal(events[0].args.symbol.valueOf(), SYMBOL);
+      assert.equal(events[0].args.value.valueOf(), value);
+      assert.equal(events[0].args.reference.valueOf(), "");
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(receiver, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedReceiverBalance);
+    });
+  });
+  it('should be possible to do allowance transfer to missing holder', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var receiver = accounts[2];
+    var value = 300;
+    var expectedHolderBalance = VALUE - value;
+    var expectedReceiverBalance = value;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, receiver, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(receiver, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedReceiverBalance);
+    });
+  });
+  it('should be possible to do allowance transfer with value less than balance and less than allowed', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 201;
+    var value = 200;
+    var allowed = 201;
+    var expectedHolderBalance = balance - value;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to do allowance transfer with value less than balance and equal to allowed', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 201;
+    var value = 200;
+    var allowed = 200;
+    var expectedHolderBalance = balance - value;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to do allowance transfer with value equal to balance and less than allowed', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 200;
+    var value = 200;
+    var allowed = 201;
+    var expectedHolderBalance = balance - value;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to do allowance transfer with value equal to balance and equal to allowed', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 200;
+    var value = 200;
+    var allowed = 200;
+    var expectedHolderBalance = balance - value;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to do allowance transfer with value less than balance and less than allowed after another transfer', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 201;
+    var anotherValue = 1;
+    var value = 199;
+    var allowed = 201;
+    var expectedSpenderBalance = anotherValue + value;
+    var expectedHolderBalance = balance - anotherValue - value;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, anotherValue, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedSpenderBalance);
+    });
+  });
+  it('should be possible to do allowance transfer with value less than balance and equal to allowed after another transfer', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var balance = 201;
+    var anotherValue = 1;
+    var value = 199;
+    var allowed = 200;
+    var expectedSpenderBalance = anotherValue + value;
+    var expectedHolderBalance = balance - anotherValue - value;
+    return chronoBankPlatform.issueAsset(SYMBOL, balance, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, allowed, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, anotherValue, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedSpenderBalance);
+    });
+  });
+  it('should be possible to do allowance transfer with value (2**256 - 1)', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = UINT_256_MINUS_1;
+    return chronoBankPlatform.issueAsset(SYMBOL, value, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+      return chronoBankPlatform.balanceOf.call(spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to do allowance transfer with reference', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var receiver = accounts[2];
+    var value = 300;
+    var expectedHolderBalance = VALUE - value;
+    var expectedReceiverBalance = value;
+    var reference = "just some arbitrary string.";
+    var watcher;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      eventsHelper.setupEvents(eventsHistory);
+      watcher = eventsHistory.Transfer();
+      return chronoBankPlatform.transferFromWithReference(holder, receiver, value, SYMBOL, reference, {from: spender});
+    }).then(function(txHash) {
+      return eventsHelper.getEvents(txHash, watcher);
+    }).then(function(events) {
+      assert.equal(events.length, 1);
+      assert.equal(events[0].args.from.valueOf(), holder);
+      assert.equal(events[0].args.to.valueOf(), receiver);
+      assert.equal(events[0].args.symbol.valueOf(), SYMBOL);
+      assert.equal(events[0].args.value.valueOf(), value);
+      assert.equal(events[0].args.reference.valueOf(), reference);
+      return chronoBankPlatform.balanceOf.call(holder, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedHolderBalance);
+      return chronoBankPlatform.balanceOf.call(receiver, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), expectedReceiverBalance);
+    });
+  });
+
+  it('should return 0 allowance for existing owner and not allowed existing spender', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transfer(spender, 100, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should return 0 allowance for existing owner and not allowed missing spender', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should return 0 allowance for missing owner and existing spender', function() {
+    var holder = accounts[1];
+    var spender = accounts[0];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should return 0 allowance for missing owner and missing spender', function() {
+    var holder = accounts[1];
+    var spender = accounts[2];
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should return 0 allowance for existing oneself', function() {
+    var holder = accounts[0];
+    var spender = holder;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should return 0 allowance for missing oneself', function() {
+    var holder = accounts[1];
+    var spender = holder;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should return 0 allowance for missing symbol', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var missingSymbol = bytes32(33);
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, 100, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, missingSymbol);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), 0);
+    });
+  });
+  it('should respect symbol when telling allowance', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var symbol = SYMBOL;
+    var symbol2 = bytes32(2);
+    var value = 100;
+    var value2 = 200;
+    return chronoBankPlatform.issueAsset(symbol, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.issueAsset(symbol2, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value, symbol);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value2, symbol2);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, symbol);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+      return chronoBankPlatform.allowance.call(holder, spender, symbol2);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value2);
+    });
+  });
+  it('should respect holder when telling allowance', function() {
+    var holder = accounts[0];
+    var holder2 = accounts[1];
+    var spender = accounts[2];
+    var value = 100;
+    var value2 = 200;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value2, SYMBOL, {from: holder2});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+      return chronoBankPlatform.allowance.call(holder2, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value2);
+    });
+  });
+  it('should respect spender when telling allowance', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var spender2 = accounts[2];
+    var value = 100;
+    var value2 = 200;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender2, value2, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+      return chronoBankPlatform.allowance.call(holder, spender2, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value2);
+    });
+  });
+  it('should be possible to check allowance of existing owner and allowed existing spender', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 300;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.transfer(spender, 100, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should be possible to check allowance of existing owner and allowed missing spender', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 300;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), value);
+    });
+  });
+  it('should return 0 allowance after another transfer', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = 300;
+    var resultValue = 0;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, value, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+    });
+  });
+  it('should return 1 allowance after another transfer', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var receiver = accounts[2];
+    var value = 300;
+    var transfer = 299;
+    var resultValue = 1;
+    return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, receiver, transfer, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+    });
+  });
+  it('should return 2**255 allowance after another transfer', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = UINT_256_MINUS_1;
+    var transfer = UINT_255_MINUS_1;
+    var resultValue = UINT_255;
+    return chronoBankPlatform.issueAsset(SYMBOL, value, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, transfer, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
+    });
+  });
+  it('should return (2**256 - 2) allowance after another transfer', function() {
+    var holder = accounts[0];
+    var spender = accounts[1];
+    var value = UINT_256_MINUS_1;
+    var transfer = 1;
+    var resultValue = UINT_256_MINUS_2;
+    return chronoBankPlatform.issueAsset(SYMBOL, value, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE).then(function() {
+      return chronoBankPlatform.approve(spender, value, SYMBOL);
+    }).then(function() {
+      return chronoBankPlatform.transferFrom(holder, spender, transfer, SYMBOL, {from: spender});
+    }).then(function() {
+      return chronoBankPlatform.allowance.call(holder, spender, SYMBOL);
+    }).then(function(result) {
+      assert.equal(result.valueOf(), resultValue);
     });
   });
 });
