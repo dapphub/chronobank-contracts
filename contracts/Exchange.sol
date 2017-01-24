@@ -13,11 +13,11 @@ contract Exchange is Owned {
     event WithdrawTokens(address indexed recipient, uint amount);
     event WithdrawEth(address indexed recipient, uint amount);
 
-    function init(address _asset) onlyContractOwner() returns(bool) {
+    function init(Asset _asset) onlyContractOwner() returns(bool) {
         if (address(asset) != 0x0) {
             return false;
         }
-        asset = Asset(_asset);
+        asset = _asset;
         return true;
     }
 

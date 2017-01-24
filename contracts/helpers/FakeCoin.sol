@@ -1,5 +1,6 @@
 pragma solidity ^0.4.4;
 
+// For testing purposes.
 contract FakeCoin {
     mapping(address => uint) public balanceOf;
 

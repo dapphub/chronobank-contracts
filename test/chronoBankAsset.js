@@ -276,7 +276,7 @@ contract('ChronoBankAsset', function(accounts) {
     var watcher;
     return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
       eventsHelper.setupEvents(chronoBankAssetProxy);
-      watcher = chronoBankAssetProxy.Approve();
+      watcher = chronoBankAssetProxy.Approval();
       return chronoBankAssetProxy.approve(owner, 100);
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);
@@ -294,7 +294,7 @@ contract('ChronoBankAsset', function(accounts) {
     var watcher;
     return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
       eventsHelper.setupEvents(chronoBankAssetProxy);
-      watcher = chronoBankAssetProxy.Approve();
+      watcher = chronoBankAssetProxy.Approval();
       return chronoBankAssetProxy.approve(spender, value, {from: holder});
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);
@@ -318,7 +318,7 @@ contract('ChronoBankAsset', function(accounts) {
     var watcher;
     return chronoBankPlatform.setProxy(chronoBankAssetProxy.address, SYMBOL).then(function() {
       eventsHelper.setupEvents(chronoBankAssetProxy);
-      watcher = chronoBankAssetProxy.Approve();
+      watcher = chronoBankAssetProxy.Approval();
       return chronoBankPlatform.approve(spender, value, SYMBOL, {from: holder});
     }).then(function(txHash) {
       return eventsHelper.getEvents(txHash, watcher);

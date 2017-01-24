@@ -28,13 +28,13 @@ contract Rewards {
     event WithdrawShares(address indexed who, uint amount);
     event Error(bytes32 message);
 
-    function init(address _sharesContract, uint _closeIntervalDays) returns(bool) {
+    function init(Asset _sharesContract, uint _closeIntervalDays) returns(bool) {
         // only once
         if (periods.length > 0) {
             return false;
         }
 
-        sharesContract = Asset(_sharesContract);
+        sharesContract = _sharesContract;
         closeInterval = _closeIntervalDays;
         periods.length++;
         periods[0].startDate = now;
@@ -90,14 +90,14 @@ contract Rewards {
         return true;
     }
 
-    function registerAsset(address _assetAddress) returns(bool) {
+    function registerAsset(Asset _assetAddress) returns(bool) {
         Period period = periods[lastClosedPeriod()];
         if (period.assetBalances[_assetAddress] != 0) {
             Error("Asset is already registered");
             return false;
         }
 
-        period.assetBalances[_assetAddress] = Asset(_assetAddress).balanceOf(this) - rewardsLeft[_assetAddress];
+        period.assetBalances[_assetAddress] = _assetAddress.balanceOf(this) - rewardsLeft[_assetAddress];
         rewardsLeft[_assetAddress] += period.assetBalances[_assetAddress];
 
         AssetRegistration(_assetAddress, period.assetBalances[_assetAddress]);

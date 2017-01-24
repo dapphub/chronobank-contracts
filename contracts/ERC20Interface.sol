@@ -1,8 +1,8 @@
 pragma solidity ^0.4.4;
 
 contract ERC20Interface {
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approved(address indexed _owner, address indexed _spender, uint256 _value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed from, address indexed spender, uint256 value);
 
     function totalSupply() constant returns (uint256 supply);
     function balanceOf(address _owner) constant returns (uint256 balance);

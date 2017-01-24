@@ -25,6 +25,11 @@ contract Proxy {
  * Platform uses EventsHistory contract to keep events, so that in case it needs to be redeployed
  * at some point, all the events keep appearing at the same place.
  *
+ * Every asset is meant to be used through a proxy contract. Only one proxy contract have access
+ * rights for a particular asset.
+ *
+ * Features: transfers, allowances, supply adjustments, lost wallet access recovery.
+ *
  * Note: all the non constant functions return false instead of throwing in case if state change
  * didn't happen yet.
  */

@@ -2,6 +2,13 @@ pragma solidity ^0.4.4;
 
 import "EventsHistory.sol";
 
+/**
+ * @title ChronoBank Platform Emitter.
+ *
+ * Contains all the original event emitting function definitions and events.
+ * In case of new events needed later, additional emitters can be developed.
+ * All the functions is meant to be called using delegatecall.
+ */
 library ChronoBankPlatformEmitter {
     event Transfer(address indexed from, address indexed to, bytes32 indexed symbol, uint value, string reference, uint version);
     event Issue(bytes32 indexed symbol, uint value, address by, uint version);
@@ -39,6 +46,15 @@ library ChronoBankPlatformEmitter {
         Error(_message, _getVersion());
     }
 
+    /**
+     * Get version number of the caller.
+     *
+     * Assuming that the call is made by EventsHistory using delegate call,
+     * context was not changed, so the caller is the address that called
+     * EventsHistory.
+     *
+     * @return current context caller version number.
+     */
     function _getVersion() constant internal returns(uint) {
         return EventsHistory(address(this)).versions(msg.sender);
     }

@@ -1,7 +1,8 @@
 pragma solidity ^0.4.4;
 
-import "ChronoBankPlatform.sol";
+import "../ChronoBankPlatform.sol";
 
+// For testing purposes.
 contract ChronoBankPlatformTestable is ChronoBankPlatform {
     function transfer(address _to, uint _value, bytes32 _symbol) returns(bool) {
         return transferWithReference(_to, _value, _symbol, "");
