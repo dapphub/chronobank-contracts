@@ -1,5 +1,3 @@
-var http = require('http');
-
 function Reverter(web3) {
   var snapshotId;
 

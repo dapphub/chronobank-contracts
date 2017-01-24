@@ -1,5 +1,11 @@
 pragma solidity ^0.4.4;
 
+/**
+ * @title Owned contract with safe ownership pass.
+ *
+ * Note: all the non constant functions return false instead of throwing in case if state change
+ * didn't happen yet.
+ */
 contract Owned {
     address public contractOwner;
     address public pendingContractOwner;
@@ -14,11 +20,27 @@ contract Owned {
         }
     }
 
+    /**
+     * Prepares ownership pass.
+     *
+     * Can only be called by current owner.
+     *
+     * @param _to address of the next owner.
+     *
+     * @return success.
+     */
     function changeContractOwnership(address _to) onlyContractOwner() returns(bool) {
         pendingContractOwner = _to;
         return true;
     }
 
+    /**
+     * Finalize ownership pass.
+     *
+     * Can only be called by pending owner.
+     *
+     * @return success.
+     */
     function claimContractOwnership() returns(bool) {
         if (pendingContractOwner != msg.sender) {
             return false;
