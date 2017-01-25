@@ -74,7 +74,7 @@ contract('Rewards', (accounts) => {
   it('should receive the right shares contract address after init() call', () => {
     return defaultInit()
       .then(reward.sharesContract)
-      .then((address) => assert.equal(address, shares.address))
+      .then((address) => assert.equal(address, shares.address));
   });
 
   it('should not be possible to call init twice', () => {
@@ -83,14 +83,14 @@ contract('Rewards', (accounts) => {
       .then(reward.sharesContract)
       .then((address) => assert.equal(address, shares.address))
       .then(reward.closeInterval)
-      .then((interval) => assert.equal(interval, ZERO_INTERVAL))
+      .then((interval) => assert.equal(interval, ZERO_INTERVAL));
   });
 
   // depositFor(address _address, uint _amount) returns(bool)
   it('should return true if was called with 0 shares (copy from prev period)', () => {
     return defaultInit()
       .then(() => reward.depositFor.call(accounts[0], 0))
-      .then((res) => assert.isTrue(res))
+      .then((res) => assert.isTrue(res));
   });
 
   it('should not deposit if sharesContract.transferFrom() failed', () => {
@@ -99,7 +99,7 @@ contract('Rewards', (accounts) => {
       .then(() => assertSharesBalance(accounts[0], 1000))
       .then(() => assertDepositBalance(accounts[0], 0))
       .then(() => assertDepositBalanceInPeriod(accounts[0], 0, 0))
-      .then(() => assertTotalDepositInPeriod(0, 0))
+      .then(() => assertTotalDepositInPeriod(0, 0));
   });
 
   it('should be possible to deposit shares', () => {
@@ -107,7 +107,7 @@ contract('Rewards', (accounts) => {
       .then(() => reward.depositFor(accounts[0], 100))
       .then(() => assertDepositBalance(accounts[0], 100))
       .then(() => assertDepositBalanceInPeriod(accounts[0], 0, 100))
-      .then(() => assertTotalDepositInPeriod(0, 100))
+      .then(() => assertTotalDepositInPeriod(0, 100));
   });
 
   it('should be possible to make deposit several times in one period', () => {
@@ -127,7 +127,7 @@ contract('Rewards', (accounts) => {
       .then(() => assertDepositBalance(accounts[1], 100))
       .then(() => assertDepositBalanceInPeriod(accounts[1], 0, 100))
 
-      .then(() => assertTotalDepositInPeriod(0, 300))
+      .then(() => assertTotalDepositInPeriod(0, 300));
   });
 
   it('should be possible to call deposit(0) several times', () => {
@@ -148,7 +148,7 @@ contract('Rewards', (accounts) => {
       .then(reward.closePeriod)
       .then(() => assertTotalDepositInPeriod(1, 50))
       .then(() => reward.registerAsset(asset1.address))
-      .then(() => assertAssetBalanceInPeriod(asset1.address, 1, 200))
+      .then(() => assertAssetBalanceInPeriod(asset1.address, 1, 200));
   });
 
   // closePeriod() returns(bool)
@@ -159,7 +159,7 @@ contract('Rewards', (accounts) => {
       .then(reward.closePeriod)
       // periods.length still 0
       .then(reward.lastPeriod)
-      .then((period) => assert.equal(period, 0))
+      .then((period) => assert.equal(period, 0));
   });
 
   it('should be possible to close period', () => {
@@ -167,7 +167,7 @@ contract('Rewards', (accounts) => {
       .then(reward.closePeriod)
       // periods.length become 1
       .then(reward.lastPeriod)
-      .then((period) => assert.equal(period, 1))
+      .then((period) => assert.equal(period, 1));
   });
 
   // registerAsset(address _assetAddress) returns(bool)
@@ -196,7 +196,19 @@ contract('Rewards', (accounts) => {
       .then((res) => assert.isFalse(res))
       .then(() => reward.registerAsset(asset1.address))
       .then(() => assertAssetBalanceInPeriod(asset1.address, 0, 100))
-      .then(() => assertRewardsLeft(asset1.address, 100))
+      .then(() => assertRewardsLeft(asset1.address, 100));
+  });
+
+  it('should not be possible to register shares as an asset', () => {
+    return defaultInit()
+      .then(() => shares.mint(reward.address, 100))
+      .then(reward.closePeriod)
+      // 1st registration - true
+      .then(() => reward.registerAsset.call(shares.address))
+      .then((res) => assert.isFalse(res))
+      .then(() => reward.registerAsset(shares.address))
+      .then(() => assertAssetBalanceInPeriod(shares.address, 0, 0))
+      .then(() => assertRewardsLeft(shares.address, 0));
   });
 
   it('should count incoming rewards separately for each period', () => {
@@ -215,7 +227,7 @@ contract('Rewards', (accounts) => {
       .then(() => reward.registerAsset(asset1.address))
       .then(() => assertAssetBalanceInPeriod(asset1.address, 1, 200))
 
-      .then(() => assertRewardsLeft(asset1.address, 300))
+      .then(() => assertRewardsLeft(asset1.address, 300));
   });
 
   // calculateRewardForAddressAndPeriod(address _assetAddress, address _address, uint _period) returns(bool)
@@ -235,7 +247,7 @@ contract('Rewards', (accounts) => {
       // call for unclosed period (last is always unclosed)
       .then(reward.lastPeriod)
       .then((lastPeriod) => reward.calculateRewardForAddressAndPeriod.call(asset1.address, accounts[0], lastPeriod))
-      .then((res) => assert.isFalse(res))
+      .then((res) => assert.isFalse(res));
   });
 
   it('should return false when calculating rewards if balance for assetAddress == 0', () => {
@@ -244,7 +256,7 @@ contract('Rewards', (accounts) => {
       .then(reward.closePeriod)
       // call for closed period (last - 1 is always closed)
       .then(() => reward.calculateRewardForAddressAndPeriod.call('0x1', accounts[0], 0))
-      .then((res) => assert.isFalse(res))
+      .then((res) => assert.isFalse(res));
   });
 
   it('should calculate reward', () => {
@@ -265,7 +277,7 @@ contract('Rewards', (accounts) => {
       .then(() => reward.calculateRewardForAddressAndPeriod(asset1.address, accounts[1], 0))
       .then(() => reward.isCalculatedFor(asset1.address, accounts[1], 0))
       .then((res) => assert.isTrue(res))
-      .then(() => assertRewardsFor(accounts[1], asset1.address, 25))
+      .then(() => assertRewardsFor(accounts[1], asset1.address, 25));
   });
 
   it('should calculate rewards for several periods', () => {
@@ -298,7 +310,7 @@ contract('Rewards', (accounts) => {
       .then(() => reward.calculateRewardForAddressAndPeriod(asset1.address, accounts[0], 1))
       .then(() => reward.isCalculatedFor(asset1.address, accounts[0], 1))
       .then((res) => assert.isTrue(res))
-      .then(() => assertRewardsFor(accounts[0], asset1.address, 150))
+      .then(() => assertRewardsFor(accounts[0], asset1.address, 150));
   });
 
   // withdrawShares(uint _amount) returns(bool)
@@ -311,7 +323,7 @@ contract('Rewards', (accounts) => {
       .then(() => assertDepositBalance(accounts[0], 100))
       .then(() => assertTotalDepositInPeriod(0, 100))
       .then(() => assertSharesBalance(accounts[0], SHARES_BALANCE - 100))
-      .then(() => assertSharesBalance(reward.address, 100))
+      .then(() => assertSharesBalance(reward.address, 100));
   });
 
   it('should withdraw shares without deposit in new period', () => {
@@ -330,7 +342,7 @@ contract('Rewards', (accounts) => {
       .then(() => reward.deposit(0))
       .then(() => assertDepositBalance(accounts[0], 50))
       .then(() => assertDepositBalanceInPeriod(accounts[0], 1, 50))
-      .then(() => assertTotalDepositInPeriod(1, 50))
+      .then(() => assertTotalDepositInPeriod(1, 50));
   });
 
   it('should withdraw shares', () => {
@@ -341,14 +353,14 @@ contract('Rewards', (accounts) => {
       .then(() => assertDepositBalanceInPeriod(accounts[0], 0, 50))
       .then(() => assertTotalDepositInPeriod(0, 50))
       .then(() => assertSharesBalance(accounts[0], SHARES_BALANCE - 50))
-      .then(() => assertSharesBalance(reward.address, 50))
+      .then(() => assertSharesBalance(reward.address, 50));
   });
 
   // withdrawRewardFor(address _address, uint _amount, address _assetAddress) returns(bool)
   it('should return false if rewardsLeft == 0', () => {
     return defaultInit()
       .then(() => reward.withdrawRewardFor.call(asset1.address, accounts[0], 100))
-      .then((res) => assert.isFalse(res))
+      .then((res) => assert.isFalse(res));
   });
 
   it('should withdraw reward', () => {
@@ -363,7 +375,7 @@ contract('Rewards', (accounts) => {
       .then(() => reward.withdrawRewardFor(asset1.address, accounts[0], 100))
       .then(() => assertAsset1Balance(accounts[0], 100))
       .then(() => assertRewardsLeft(asset1.address, 0))
-      .then(() => assertRewardsFor(accounts[0], asset1.address, 0))
+      .then(() => assertRewardsFor(accounts[0], asset1.address, 0));
   });
 
   it('should withdraw reward by different shareholders', () => {
@@ -384,7 +396,7 @@ contract('Rewards', (accounts) => {
       .then(() => assertAsset1Balance(accounts[1], 66))
       .then(() => assertRewardsLeft(asset1.address, 1))
       .then(() => assertRewardsFor(accounts[0], asset1.address, 0))
-      .then(() => assertRewardsFor(accounts[1], asset1.address, 0))
+      .then(() => assertRewardsFor(accounts[1], asset1.address, 0));
   });
 
   it('should allow partial withdraw reward', () => {
@@ -399,6 +411,6 @@ contract('Rewards', (accounts) => {
       .then(() => reward.withdrawRewardFor(asset1.address, accounts[0], 30))
       .then(() => assertAsset1Balance(accounts[0], 30))
       .then(() => assertRewardsLeft(asset1.address, 70))
-      .then(() => assertRewardsFor(accounts[0], asset1.address, 70))
+      .then(() => assertRewardsFor(accounts[0], asset1.address, 70));
   });
 });
