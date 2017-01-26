@@ -32,7 +32,7 @@ contract ChronoMint is Managed {
     setVal(uint(name),value);
   }
 
-  function proposeLOC (string _name, address _controller, uint _issueLimit, string _publishedHash, uint _expDate) onlyAuthorized returns(address) {
+  function proposeLOC (string _name, address _controller, uint _issueLimit, string _publishedHash, uint _expDate) execute(Operations.createLOC) returns(address) {
     address locAddr = new LOC();
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
     LOC loc = LOC(locAddr);
