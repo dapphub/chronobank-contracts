@@ -17,37 +17,29 @@ contract Managed is Configurable, Shareable {
   // The circular linked list state variable.
   LibCLLi.CLL list;
 
-  enum Operations {createLOC,editLOC}
-  event needConfirm(uint txIndex);
-  uint public numAuthorizedKeys;
-  mapping(address => bool) public authorizedKeys;
-  uint pendingTxsCount;
-  mapping (uint => bytes32) pendingTxs;
-  mapping (bytes32 => Transaction) txs;
+  enum Operations {createLOC,editLOC,LOCstatus}
   address[] own;
+  mapping (bytes32 => Transaction) txs;
+  uint numAuthorizedKeys = 1;
 
   struct Transaction {
     address to;
     bytes data;
     Operations op;
-    bool initialized;
+    bool confirmed;
   }
 
   function Managed() Shareable(own,required) {
     required = 2;
     address owner  = msg.sender;
-    authorizedKeys[owner] = true;
     owners[numAuthorizedKeys] = uint(owner);
+    ownerIndex[uint(owner)] = numAuthorizedKeys;
     numAuthorizedKeys++;
   }
 
-  function setRequired(uint _required) {
+  function setRequired(uint _required) onlyAuthorized() {
     required = _required; 
   }
-
-  function getRequired() onlyAuthorized returns (uint) {
-    return required;
-  } 
 
   modifier onlyAuthorized() {
       if (isAuthorized(msg.sender)) {
@@ -56,46 +48,49 @@ contract Managed is Configurable, Shareable {
   }
 
   modifier execute(Operations _type) {
-   needConfirm(pendingTxsCount);
-   bytes32 _r = sha3(msg.data, block.number);
-   if(!txs[_r].initialized) {
-   if (!confirm(_r)) {
+   if(numAuthorizedKeys > 2) {
+   if (this != msg.sender) {
+      bytes32 _r = sha3(msg.data,"signature");
       txs[_r].data = msg.data;
       txs[_r].op = _type;
-      txs[_r].initialized = true;
-      txs[_r].to = msg.sender;
-      pendingTxs[pendingTxsCount] = _r;
-      pendingTxsCount++;
+      txs[_r].to = this;
+      confirm(_r);
     } 
     else {
-      _;
+     _;
     }
-   }
+  } else {
+  _;
   }
+ }
 
   function confirm(bytes32 _h) onlymanyowners(_h) returns (bool) {
-      if (!txs[_h].to.call(txs[_h].data)) {
-        return false;
+     if (txs[_h].to != 0) {
+      if(!txs[_h].to.call(txs[_h].data)) {
+        throw;
       }
-      delete txs[_h];
       return true;
+      }
   }
-
+  
   function isAuthorized(address key) returns(bool) {
-      return authorizedKeys[key];
-  }
+      if(ownerIndex[uint(key)] != uint(0x0)) {
+        return true;
+      }
+      return false;
+  } 
 
   function addKey(address key) execute(Operations.createLOC) {
-    if (!authorizedKeys[key]) { // Make sure that the key being submitted isn't already CBE.
-      authorizedKeys[key] = true;
-      owners[numAuthorizedKeys] = uint(key);
+    if (ownerIndex[uint(key)] == uint(0x0)) { // Make sure that the key being submitted isn't already CBE.
+      owners[numAuthorizedKeys] = uint(key);        
+      ownerIndex[uint(key)] = numAuthorizedKeys;
       numAuthorizedKeys++;
     }
   }
 
   function revokeKey(address key) execute(Operations.createLOC) {
-    if (authorizedKeys[key]) { // Make sure that the key being submitted isn't already CBE.
-      authorizedKeys[key] = false;
+    if (ownerIndex[uint(key)] != uint(0x0)) { // Make sure that the key being submitted isn't already CBE.
+      ownerIndex[uint(key)] = 0;
       numAuthorizedKeys--;
     }
   }

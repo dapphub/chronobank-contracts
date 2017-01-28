@@ -1,24 +1,21 @@
 pragma solidity ^0.4.4;
 
 import "ChronoMintConfigurable.sol";
+import "StringLib.sol";
 
 contract LOC is ChronoMintConfigurable {
+  using StringLib for StringLib;
   enum Status {maintenance, active, suspended, bankrupt}
   Status public status;
 
-  function setLOCdata(string _name, address _mint, address _controller, uint _issueLimit, string _publishedHash, uint _expDate){
-    chronoMint = _mint;
+  function LOC(string _name, address _mint, address _controller, uint _issueLimit, string _publishedHash, uint _expDate){
     status = Status.maintenance;
     contracts[uint(Setting.controller)] = _controller;
     settings[uint(Setting.name)] = _name;
     settings[uint(Setting.publishedHash)] = _publishedHash;
-    settings[uint(Setting.issueLimit)] = bytes32ToString(bytes32(_issueLimit));
+    settings[uint(Setting.issueLimit)] = bytes32ToString(StringLib.uintToBytes(_issueLimit));
   }
  
-  function approved() onlyMint{
-    setStatus(Status.active);
-  }
-
   function isController(address _ad) returns(bool) {
     if (_ad == contracts[uint(Setting.controller)])
       return true;

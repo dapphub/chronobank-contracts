@@ -27,5 +27,4 @@ contract ChronoMintConfigurable is Configurable {
       setVal(name, value);
   }
 
-  function approved() onlyMint();
 }
