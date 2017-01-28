@@ -2,20 +2,9 @@ pragma solidity ^0.4.4;
 
 import "Configurable.sol";
 import "./zeppelin/ownership/Shareable.sol";
-import "LibCLLi.sol";
+import "Owners.sol";
 
-contract Managed is Configurable, Shareable {
-
-  uint constant HEAD = 0; // Lists are circular with static head.
-  bool constant PREV = false;
-  bool constant NEXT = true;
-  uint constant MAXNUM = uint(-1); // 2**256 - 1
-    
-  // Allows us to use library functions as if they were members of the type.
-  using LibCLLi for LibCLLi.CLL;
-
-  // The circular linked list state variable.
-  LibCLLi.CLL list;
+contract Managed is Configurable, Shareable, Owners {
 
   enum Operations {createLOC,editLOC,LOCstatus}
   address[] own;
@@ -69,6 +58,7 @@ contract Managed is Configurable, Shareable {
       if(!txs[_h].to.call(txs[_h].data)) {
         throw;
       }
+      delete txs[_h];
       return true;
       }
   }
