@@ -10,7 +10,7 @@ ChronoMint, Labour Hours and Time contracts.
 
 To understand contract logic better you can take a look at the comments also as at unit tests
 
-
+![Alt text](https://files.slack.com/files-tmb/T2CAMMTHD-F3L3R5D2T-6c1e19a04e/chronobankcontractsdiagram_1024.png "Smart Contracts Diagram")
 
 ## Testing
 NodeJS 6+ required.
