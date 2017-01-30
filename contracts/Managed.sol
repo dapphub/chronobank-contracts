@@ -2,14 +2,13 @@ pragma solidity ^0.4.4;
 
 import "Configurable.sol";
 import "./zeppelin/ownership/Shareable.sol";
-import "Owners.sol";
 
-contract Managed is Configurable, Shareable, Owners {
+contract Managed is Configurable, Shareable {
 
   enum Operations {createLOC,editLOC,LOCstatus}
-  address[] own;
   mapping (bytes32 => Transaction) txs;
   uint numAuthorizedKeys = 1;
+  address[] own;
 
   struct Transaction {
     address to;
@@ -27,7 +26,9 @@ contract Managed is Configurable, Shareable, Owners {
   }
 
   function setRequired(uint _required) onlyAuthorized() {
-    required = _required; 
+    if(_required > 1) {
+      required = _required; 
+    }
   }
 
   modifier onlyAuthorized() {
@@ -80,9 +81,19 @@ contract Managed is Configurable, Shareable, Owners {
 
   function revokeKey(address key) execute(Operations.createLOC) {
     if (ownerIndex[uint(key)] != uint(0x0)) { // Make sure that the key being submitted isn't already CBE.
-      ownerIndex[uint(key)] = 0;
+      remove(ownerIndex[uint(key)]);
+      delete ownerIndex[uint(key)];
       numAuthorizedKeys--;
     }
   }
+
+ function remove(uint index){
+        if (index >= owners.length) return;
+
+        for (uint i = index; i<owners.length-1; i++){
+            owners[i] = owners[i+1];
+        }
+        delete owners[owners.length-1];
+    }
 
 }

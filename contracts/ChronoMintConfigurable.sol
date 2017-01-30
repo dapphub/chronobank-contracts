@@ -4,13 +4,11 @@ import "Configurable.sol";
 
 contract ChronoMintConfigurable is Configurable {
   address chronoMint;
-  event MessageSender(address sender);
 
   modifier onlyMint() {
     if (isMint(msg.sender)) {
       _;
       } else {
-        MessageSender(chronoMint);
         return;
       }
   }
@@ -18,11 +16,12 @@ contract ChronoMintConfigurable is Configurable {
 
   }
   function isMint(address _ad) returns(bool) {
-    if (_ad == address(chronoMint))
+    if (_ad == chronoMint)
       return true;
     else
       return false;
   }
+
   function setValue(uint name, string value) onlyMint() {
       setVal(name, value);
   }
