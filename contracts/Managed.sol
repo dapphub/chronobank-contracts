@@ -5,7 +5,7 @@ import "./zeppelin/ownership/Shareable.sol";
 
 contract Managed is Configurable, Shareable {
 
-  enum Operations {createLOC,editLOC,LOCstatus}
+  enum Operations {createLOC,editLOC,addLOC,removeLOC,editMint}
   mapping (bytes32 => Transaction) txs;
   uint numAuthorizedKeys = 1;
   address[] own;

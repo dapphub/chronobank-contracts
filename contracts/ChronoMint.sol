@@ -1,12 +1,9 @@
 pragma solidity ^0.4.4;
 
 import "Managed.sol";
-import "ChronoMintConfigurable.sol";
 import "LOC.sol";
-import "StringLib.sol";
 
 contract ChronoMint is Managed {
-  using StringLib for StringLib;
 
   uint private offeringCompaniesByIndex;
   mapping(uint => address) internal offeringCompanies;
@@ -23,19 +20,26 @@ contract ChronoMint is Managed {
       else
         return false;
   }
+
   function getValue(uint name) constant returns(string) {
     return settings[name];
   }
 
-  function setAddress(uint name, address value) onlyAuthorized {
+  function setAddress(uint name, address value) execute(Operations.editMint) {
     contracts[name] = value;
   }
 
-  function setValue(Setting name, string value) onlyAuthorized() {
-    setVal(uint(name),value);
+  function addLOC (address _locAddr) execute(Operations.addLOC) {
+    offeringCompanies[offeringCompaniesByIndex] = _locAddr;
+    offeringCompaniesByIndex++;
   }
 
-  function proposeLOC (string _name, address _controller, uint _issueLimit, string _publishedHash, uint _expDate) execute(Operations.createLOC) returns(address) {
+  function removeLOC(address _locAddr) execute(Operations.removeLOC) {
+    delete offeringCompanies[offeringCompaniesByIndex];
+    offeringCompaniesByIndex--;
+  }
+
+  function proposeLOC(string _name, address _controller, uint _issueLimit, string _publishedHash, uint _expDate) execute(Operations.createLOC) returns(address) {
     address locAddr = new LOC(_name,msg.sender,_controller,_issueLimit,_publishedHash,_expDate);
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
     LOC loc = LOC(locAddr);
@@ -43,6 +47,14 @@ contract ChronoMint is Managed {
     newLOC(msg.sender, locAddr);
     offeringCompaniesByIndex++;
     return locAddr;
+  }
+
+  function setLOCStatus(uint _LOCid, Status status) execute(Operations.editLOC) {
+     LOC(offeringCompanies[_LOCid]).setStatus(status);
+  }
+
+  function setLOCValue(uint _LOCid, Setting name, string value) onlyAuthorized() {
+    LOC(offeringCompanies[_LOCid]).setValue(uint(name),value);
   }
 
   function getLOCbyID(uint _id) onlyAuthorized() returns(address) {
@@ -58,10 +70,10 @@ contract ChronoMint is Managed {
     contracts[uint(Setting.rewardsContract)] = _rc;
     contracts[uint(Setting.exchangeContract)] = _ec;
     contracts[uint(Setting.proxyContract)] = _pc;
-    settings[uint(Setting.securityPercentage)] = bytes32ToString(StringLib.uintToBytes(1));
-    settings[uint(Setting.liquidityPercentage)] = bytes32ToString(StringLib.uintToBytes(1));
-    settings[uint(Setting.insurancePercentage)] = bytes32ToString(StringLib.uintToBytes(1));
-    settings[uint(Setting.insuranceDuration)] = bytes32ToString(StringLib.uintToBytes(1));
+    values[uint(Setting.securityPercentage)] = 1;
+    values[uint(Setting.liquidityPercentage)] = 1;
+    values[uint(Setting.insurancePercentage)] = 1;
+    values[uint(Setting.insuranceDuration)] = 1;
   }
 
   function()
