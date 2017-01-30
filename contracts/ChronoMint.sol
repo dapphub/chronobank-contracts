@@ -9,7 +9,7 @@ contract ChronoMint is Managed {
   using StringLib for StringLib;
 
   uint private offeringCompaniesByIndex;
-  mapping(uint => address) public offeringCompanies;
+  mapping(uint => address) internal offeringCompanies;
   event newLOC(address _from, address _LOC);
 
   function getAddress(uint name) constant returns(address) {
@@ -39,7 +39,7 @@ contract ChronoMint is Managed {
     address locAddr = new LOC(_name,msg.sender,_controller,_issueLimit,_publishedHash,_expDate);
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
     LOC loc = LOC(locAddr);
-    //loc.setStatus(1);
+    loc.setStatus(1);
     newLOC(msg.sender, locAddr);
     offeringCompaniesByIndex++;
     return locAddr;

@@ -4,6 +4,3 @@
 [submodule "LibCLLi"]
 	path = LibCLLi
 	url = https://github.com/o0ragman0o/LibCLLi.git
-[submodule "ethereum-string-utils"]
-	path = ethereum-string-utils
-	url = https://github.com/Pavel-DV/ethereum-string-utils.git
