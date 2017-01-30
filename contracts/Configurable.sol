@@ -2,6 +2,7 @@ pragma solidity ^0.4.4;
 
 contract Configurable {
   enum Setting {name,website,mint,controller,issueLimit,issued,redeemed,publishedHash,expDate,timeContract,rewardsContract,exchangeContract,proxyContract,securityPercentage,liquidityPercentage,insurancePercentage,insuranceDuration}
+  enum Status {maintenance, active, suspended, bankrupt}
   Setting setting;
   mapping(uint => string) internal settings;
   mapping(uint => address) internal contracts;

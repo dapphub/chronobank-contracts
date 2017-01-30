@@ -39,7 +39,7 @@ contract ChronoMint is Managed {
     address locAddr = new LOC(_name,msg.sender,_controller,_issueLimit,_publishedHash,_expDate);
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
     LOC loc = LOC(locAddr);
-    loc.setStatus(1);
+    loc.setStatus(Status.active);
     newLOC(msg.sender, locAddr);
     offeringCompaniesByIndex++;
     return locAddr;

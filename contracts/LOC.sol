@@ -1,30 +1,30 @@
 pragma solidity ^0.4.4;
 
-import "ChronoMintConfigurable.sol";
 import "StringLib.sol";
+import "Configurable.sol";
 
-contract LOC is ChronoMintConfigurable {
+contract LOC is Configurable {
   using StringLib for StringLib;
-  enum Status {maintenance, active, suspended, bankrupt}
+  address controller;
   Status public status;
 
   function LOC(string _name, address _mint, address _controller, uint _issueLimit, string _publishedHash, uint _expDate){
     status = Status.maintenance;
-    contracts[uint(Setting.controller)] = _controller;
+    controller = _controller;
     settings[uint(Setting.name)] = _name;
     settings[uint(Setting.publishedHash)] = _publishedHash;
     settings[uint(Setting.issueLimit)] = bytes32ToString(StringLib.uintToBytes(_issueLimit));
   }
  
   function isController(address _ad) returns(bool) {
-    if (_ad == contracts[uint(Setting.controller)])
+    if (_ad == controller)
       return true;
     else
       return false;
   }
 
   modifier onlyController() {
-    if ((isController(msg.sender) && status == Status.active) || isMint(msg.sender)) {
+    if (isController(msg.sender) && status == Status.active) {
       _;
       } else {
         return;
@@ -39,16 +39,16 @@ contract LOC is ChronoMintConfigurable {
     return settings[name];
   }
 
-  function getAddress(uint name) constant returns(address) {
-    return contracts[name];
+  function getController() constant returns(address) {
+    return controller;
   }
 
-  function setStatus(Status _status) onlyMint {
+  function setStatus(Status _status) onlyController {
     status = _status;
   }
 
   function setController(address _controller) onlyController {
-    contracts[uint(Setting.controller)] =  _controller;
+    controller =  _controller;
   }
 
   function setName(string _name) onlyController {
