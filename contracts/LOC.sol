@@ -5,7 +5,7 @@ import "Configurable.sol";
 contract LOC is Configurable {
   Status public status;
 
-  function LOC(string _name, address _mint, address _controller, uint _issueLimit, string _publishedHash, uint _expDate){
+  function LOC(string _name, address _controller, uint _issueLimit, string _publishedHash, uint _expDate){
     status = Status.maintenance;
     contractOwner = _controller;
     settings[uint(Setting.name)] = _name;
@@ -15,10 +15,6 @@ contract LOC is Configurable {
  
   function getName() constant returns(string) {
     return settings[uint(Setting.name)];
-  }
-
-  function getValue(uint name) constant returns(string) {
-    return settings[name];
   }
 
   function setStatus(Status _status) onlyContractOwner {

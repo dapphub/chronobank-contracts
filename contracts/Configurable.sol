@@ -9,12 +9,20 @@ contract Configurable is Owned {
   mapping(uint => uint) internal values;
   mapping(uint => address) internal contracts;
 
-  function getValue(uint name) constant returns(string) {
+  function getValue(uint name) constant returns(uint) {
+    return values[name];
+  }
+
+  function getString(uint name) constant returns(string) {
     return settings[name];
   }
 
-  function setValue(uint name, string value) onlyContractOwner {
+  function setString(uint name, string value) onlyContractOwner {
     settings[name] = value;
+  }
+
+  function setValue(uint name, uint value) onlyContractOwner {
+    values[name] = value;
   }
 
 }

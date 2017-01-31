@@ -21,40 +21,40 @@ contract ChronoMint is Managed {
         return false;
   }
 
-  function getValue(uint name) constant returns(string) {
-    return settings[name];
-  }
-
-  function setAddress(uint name, address value) execute(Operations.editMint) {
+  function setAddress(uint name, address value) onlyAuthorized() execute(Operations.editMint) {
     contracts[name] = value;
   }
 
-  function addLOC (address _locAddr) execute(Operations.addLOC) {
+  function addLOC (address _locAddr) onlyAuthorized() onlyAuthorized() execute(Operations.editMint) {
     offeringCompanies[offeringCompaniesByIndex] = _locAddr;
     offeringCompaniesByIndex++;
   }
 
-  function removeLOC(address _locAddr) execute(Operations.removeLOC) {
+  function removeLOC(address _locAddr) onlyAuthorized() execute(Operations.editMint) {
     delete offeringCompanies[offeringCompaniesByIndex];
     offeringCompaniesByIndex--;
   }
 
-  function proposeLOC(string _name, address _controller, uint _issueLimit, string _publishedHash, uint _expDate) execute(Operations.createLOC) returns(address) {
-    address locAddr = new LOC(_name,msg.sender,_controller,_issueLimit,_publishedHash,_expDate);
+  function proposeLOC(string _name, uint _issueLimit, string _publishedHash, uint _expDate) onlyAuthorized() returns(address) {
+    address locAddr = new LOC(_name,this,_issueLimit,_publishedHash,_expDate);
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
     LOC loc = LOC(locAddr);
-    loc.setStatus(Status.active);
+    //loc.setStatus(Status.active);
     newLOC(msg.sender, locAddr);
     offeringCompaniesByIndex++;
     return locAddr;
   }
 
-  function setLOCStatus(uint _LOCid, Status status) execute(Operations.editLOC) {
+  function setLOCStatus(uint _LOCid, Status status) onlyAuthorized() execute(Operations.editLOC) {
      LOC(offeringCompanies[_LOCid]).setStatus(status);
   }
 
-  function setLOCValue(uint _LOCid, Setting name, string value) onlyAuthorized() {
+  function setLOCValue(uint _LOCid, Setting name, uint value) onlyAuthorized() execute(Operations.editLOC) {
     LOC(offeringCompanies[_LOCid]).setValue(uint(name),value);
+  }
+
+  function setLOCString(uint _LOCid, Setting name, string value) onlyAuthorized() execute(Operations.editLOC) {
+    LOC(offeringCompanies[_LOCid]).setString(uint(name),value);
   }
 
   function getLOCbyID(uint _id) onlyAuthorized() returns(address) {

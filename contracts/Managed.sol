@@ -65,7 +65,7 @@ contract Managed is Configurable, Shareable {
   }
   
   function isAuthorized(address key) returns(bool) {
-      if(ownerIndex[uint(key)] != uint(0x0)) {
+      if(ownerIndex[uint(key)] != uint(0x0) || this == key) {
         return true;
       }
       return false;
