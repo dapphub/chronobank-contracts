@@ -25,6 +25,10 @@ contract ChronoMint is Managed {
     contracts[name] = value;
   }
 
+  function pendingsCount() constant returns(uint) {
+    return pendingsIndex.length;
+  }
+
   function addLOC (address _locAddr) onlyAuthorized() onlyAuthorized() execute(Operations.editMint) {
     offeringCompanies[offeringCompaniesByIndex] = _locAddr;
     offeringCompaniesByIndex++;
@@ -53,7 +57,7 @@ contract ChronoMint is Managed {
     LOC(offeringCompanies[_LOCid]).setValue(uint(name),value);
   }
 
-  function setLOCString(uint _LOCid, Setting name, string value) onlyAuthorized() execute(Operations.editLOC) {
+  function setLOCString(uint _LOCid, Setting name, string value) onlyAuthorized() {
     LOC(offeringCompanies[_LOCid]).setString(uint(name),value);
   }
 

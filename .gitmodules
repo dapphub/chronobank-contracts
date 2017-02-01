@@ -1,6 +1,0 @@
-[submodule "zeppelin-solidity"]
-	path = zeppelin-solidity
-	url = https://github.com/OpenZeppelin/zeppelin-solidity.git
-[submodule "LibCLLi"]
-	path = LibCLLi
-	url = https://github.com/o0ragman0o/LibCLLi.git
