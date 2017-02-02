@@ -28,7 +28,15 @@ contract ChronoMint is Managed {
   function pendingsCount() constant returns(uint) {
     return pendingsIndex.length;
   }
-
+  
+  function pendingById(uint _id) constant returns(bytes32) {
+    return pendingsIndex[_id];
+  }
+  
+  function pendingYetNeeded(bytes32 _hash) constant returns(uint) {
+    return pendings[_hash].yetNeeded;
+  }
+ 
   function addLOC (address _locAddr) onlyAuthorized() onlyAuthorized() execute(Operations.editMint) {
     offeringCompanies[offeringCompaniesByIndex] = _locAddr;
     offeringCompaniesByIndex++;
@@ -43,7 +51,6 @@ contract ChronoMint is Managed {
     address locAddr = new LOC(_name,this,_issueLimit,_publishedHash,_expDate);
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
     LOC loc = LOC(locAddr);
-    //loc.setStatus(Status.active);
     newLOC(msg.sender, locAddr);
     offeringCompaniesByIndex++;
     return locAddr;
