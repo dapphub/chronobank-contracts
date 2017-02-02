@@ -2,8 +2,9 @@ pragma solidity ^0.4.4;
 
 import "Managed.sol";
 import "LOC.sol";
+import "Wallet.sol";
 
-contract ChronoMint is Managed {
+contract ChronoMint is Managed,Wallet {
 
   uint private offeringCompaniesByIndex;
   mapping(uint => address) internal offeringCompanies;
@@ -50,22 +51,21 @@ contract ChronoMint is Managed {
   function proposeLOC(string _name, uint _issueLimit, string _publishedHash, uint _expDate) onlyAuthorized() returns(address) {
     address locAddr = new LOC(_name,this,_issueLimit,_publishedHash,_expDate);
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
-    LOC loc = LOC(locAddr);
     newLOC(msg.sender, locAddr);
     offeringCompaniesByIndex++;
     return locAddr;
   }
 
-  function setLOCStatus(uint _LOCid, Status status) onlyAuthorized() execute(Operations.editLOC) {
-     LOC(offeringCompanies[_LOCid]).setStatus(status);
+  function setLOCStatus(address _LOCaddr, Status status) onlyAuthorized() execute(Operations.editLOC) {
+     LOC(_LOCaddr).setStatus(status);
   }
 
-  function setLOCValue(uint _LOCid, Setting name, uint value) onlyAuthorized() execute(Operations.editLOC) {
-    LOC(offeringCompanies[_LOCid]).setValue(uint(name),value);
+  function setLOCValue(address _LOCaddr, Setting name, uint value) onlyAuthorized() execute(Operations.editLOC) {
+    LOC(_LOCaddr).setValue(uint(name),value);
   }
 
-  function setLOCString(uint _LOCid, Setting name, string value) onlyAuthorized() {
-    LOC(offeringCompanies[_LOCid]).setString(uint(name),value);
+  function setLOCString(address _LOCaddr, Setting name, string value) onlyAuthorized() {
+    LOC(_LOCaddr).setString(uint(name),value);
   }
 
   function getLOCbyID(uint _id) onlyAuthorized() returns(address) {
