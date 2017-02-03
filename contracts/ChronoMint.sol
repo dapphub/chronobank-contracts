@@ -48,8 +48,8 @@ contract ChronoMint is Managed,Wallet {
     offeringCompaniesByIndex--;
   }
 
-  function proposeLOC(string _name, uint _issueLimit, string _publishedHash, uint _expDate) onlyAuthorized() returns(address) {
-    address locAddr = new LOC(_name,this,_issueLimit,_publishedHash,_expDate);
+  function proposeLOC(string _name, string _website, uint _issueLimit, string _publishedHash, uint _expDate) onlyAuthorized() returns(address) {
+    address locAddr = new LOC(_name,_website,this,_issueLimit,_publishedHash,_expDate);
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
     newLOC(msg.sender, locAddr);
     offeringCompaniesByIndex++;

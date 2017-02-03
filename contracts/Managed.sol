@@ -25,6 +25,10 @@ contract Managed is Configurable, Shareable {
     numAuthorizedKeys++;
   }
 
+  function getTxsType(bytes32 _hash) returns (uint) {
+    return uint(txs[_hash].op);
+  }
+
   function setRequired(uint _required) onlyAuthorized() {
     if(_required > 1) {
       required = _required; 

@@ -5,10 +5,11 @@ import "Configurable.sol";
 contract LOC is Configurable {
   Status public status;
 
-  function LOC(string _name, address _controller, uint _issueLimit, string _publishedHash, uint _expDate){
+  function LOC(string _name, string _website, address _controller, uint _issueLimit, string _publishedHash, uint _expDate){
     status = Status.maintenance;
     contractOwner = _controller;
     settings[uint(Setting.name)] = _name;
+    settings[uint(Setting.website)] = _website;
     settings[uint(Setting.publishedHash)] = _publishedHash;
     values[uint(Setting.issueLimit)] = _issueLimit;
   }
