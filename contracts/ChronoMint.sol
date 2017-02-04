@@ -2,24 +2,37 @@ pragma solidity ^0.4.4;
 
 import "Managed.sol";
 import "LOC.sol";
-import "Wallet.sol";
+import "ChronoBankPlatformInterface.sol";
+import "ERC20Interface.sol";
 
-contract ChronoMint is Managed,Wallet {
-
+contract ChronoMint is Managed {
   uint private offeringCompaniesByIndex;
+  address platform;
   mapping(uint => address) internal offeringCompanies;
   event newLOC(address _from, address _LOC);
+  
+  function claimOwnership(address _addr) onlyAuthorized() returns(bool) {
+     if(Owned(_addr).claimContractOwnership()) {
+       platform = _addr;
+       return true;
+     }
+     return false;
+  }
+
+  function issueAsset(bytes32 _symbol, uint _value, string _name, string _description, uint8 _baseUnit, bool _isReissuable) onlyAuthorized() returns(bool) {
+     if(platform != 0x0) {
+     	return ChronoBankPlatformInterface(platform).issueAsset(_symbol, _value, _name, _description, _baseUnit,_isReissuable);
+     }
+     return false;
+  }
+
+  function getBalance() onlyAuthorized() returns(uint) {
+     return ERC20Interface(contracts[uint(Setting.proxyContract)]).totalSupply();
+
+  }
 
   function getAddress(uint name) constant returns(address) {
     return contracts[name];
-  }
-
-  function isCBE(address key) returns(bool) {
-      if (ownerIndex[uint(key)] > 0){
-        return true;
-      }
-      else
-        return false;
   }
 
   function setAddress(uint name, address value) onlyAuthorized() execute(Operations.editMint) {
@@ -76,7 +89,8 @@ contract ChronoMint is Managed,Wallet {
       return offeringCompaniesByIndex;
   }
 
-  function ChronoMint(address _tc, address _rc, address _ec, address _pc){
+  function ChronoMint(address _eS, address _tc, address _rc, address _ec, address _pc) {
+    eternalStorage = _eS;
     contracts[uint(Setting.timeContract)] = _tc;
     contracts[uint(Setting.rewardsContract)] = _rc;
     contracts[uint(Setting.exchangeContract)] = _ec;

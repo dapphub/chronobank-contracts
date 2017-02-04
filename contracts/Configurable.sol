@@ -1,6 +1,7 @@
 pragma solidity ^0.4.4;
 
 import "Owned.sol"; 
+import "EternalStorage.sol";
 
 contract Configurable is Owned {
   enum Setting {name,website,mint,controller,issueLimit,issued,redeemed,publishedHash,expDate,timeContract,rewardsContract,exchangeContract,proxyContract,securityPercentage,liquidityPercentage,insurancePercentage,insuranceDuration}
@@ -8,6 +9,12 @@ contract Configurable is Owned {
   mapping(uint => string) internal settings;
   mapping(uint => uint) internal values;
   mapping(uint => address) internal contracts;
+
+  address public eternalStorage;
+
+  function setStorage(address _eternalStorage) {
+    eternalStorage = _eternalStorage;
+  }
 
   function getValue(uint name) constant returns(uint) {
     return values[name];
