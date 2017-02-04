@@ -4,7 +4,7 @@ import "Owned.sol";
 import "EternalStorage.sol";
 
 contract Configurable is Owned {
-  enum Setting {name,website,mint,controller,issueLimit,issued,redeemed,publishedHash,expDate,timeContract,rewardsContract,exchangeContract,proxyContract,securityPercentage,liquidityPercentage,insurancePercentage,insuranceDuration}
+  enum Setting {name,website,controller,issueLimit,issued,redeemed,publishedHash,expDate,timeProxyContract,rewardsContract,exchangeContract,proxyContract,securityPercentage,liquidityPercentage,insurancePercentage,insuranceDuration,lhProxyContract}
   enum Status {maintenance, active, suspended, bankrupt}
   mapping(uint => string) internal settings;
   mapping(uint => uint) internal values;

@@ -21,13 +21,21 @@ contract ChronoMint is Managed {
 
   function issueAsset(bytes32 _symbol, uint _value, string _name, string _description, uint8 _baseUnit, bool _isReissuable) onlyAuthorized() returns(bool) {
      if(platform != 0x0) {
-     	return ChronoBankPlatformInterface(platform).issueAsset(_symbol, _value, _name, _description, _baseUnit,_isReissuable);
+     	return ChronoBankPlatformInterface(platform).issueAsset(_symbol, _value, _name, _description, _baseUnit, _isReissuable);
      }
      return false;
   }
 
-  function getBalance() onlyAuthorized() returns(uint) {
-     return ERC20Interface(contracts[uint(Setting.proxyContract)]).totalSupply();
+  function reissueAsset(bytes32 _symbol, uint _value) onlyAuthorized() returns(bool) {
+     if(platform != 0x0) {
+        return ChronoBankPlatformInterface(platform).reissueAsset(_symbol, _value);
+     }
+     return false;
+  }
+
+
+  function getBalance(uint _name) onlyAuthorized() returns(uint) {
+     return ERC20Interface(contracts[_name]).totalSupply();
 
   }
 
@@ -89,12 +97,12 @@ contract ChronoMint is Managed {
       return offeringCompaniesByIndex;
   }
 
-  function ChronoMint(address _eS, address _tc, address _rc, address _ec, address _pc) {
+  function ChronoMint(address _eS, address _tpc, address _rc, address _ec, address _lhpc) {
     eternalStorage = _eS;
-    contracts[uint(Setting.timeContract)] = _tc;
+    contracts[uint(Setting.timeProxyContract)] = _tpc;
     contracts[uint(Setting.rewardsContract)] = _rc;
     contracts[uint(Setting.exchangeContract)] = _ec;
-    contracts[uint(Setting.proxyContract)] = _pc;
+    contracts[uint(Setting.lhProxyContract)] = _lhpc;
     values[uint(Setting.securityPercentage)] = 1;
     values[uint(Setting.liquidityPercentage)] = 1;
     values[uint(Setting.insurancePercentage)] = 1;
