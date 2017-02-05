@@ -12,6 +12,7 @@ contract LOC is Configurable {
     settings[uint(Setting.website)] = _website;
     settings[uint(Setting.publishedHash)] = _publishedHash;
     values[uint(Setting.issueLimit)] = _issueLimit;
+    values[uint(Setting.expDate)] = _expDate;
   }
  
   function getName() constant returns(string) {
