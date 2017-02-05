@@ -19,23 +19,19 @@ contract ChronoMint is Managed {
      return false;
   }
 
-  function issueAsset(bytes32 _symbol, uint _value, string _name, string _description, uint8 _baseUnit, bool _isReissuable) onlyAuthorized() returns(bool) {
-     if(platform != 0x0) {
-     	return ChronoBankPlatformInterface(platform).issueAsset(_symbol, _value, _name, _description, _baseUnit, _isReissuable);
-     }
-     return false;
-  }
-
   function reissueAsset(bytes32 _symbol, uint _value) onlyAuthorized() returns(bool) {
      if(platform != 0x0) {
         return ChronoBankPlatformInterface(platform).reissueAsset(_symbol, _value);
      }
      return false;
   }
-
-
-  function getBalance(uint _name) onlyAuthorized() returns(uint) {
-     return ERC20Interface(contracts[_name]).totalSupply();
+ 
+  function send(uint _name, address _to, uint _value) onlyAuthorized() returns(bool) {
+     return ERC20Interface(contracts[_name]).transfer(_to,_value);
+  }
+ 
+  function getBalance(uint _name) constant returns(uint) {
+     return ERC20Interface(contracts[_name]).balanceOf(this);
 
   }
 
