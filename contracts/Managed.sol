@@ -85,8 +85,8 @@ contract Managed is Configurable, Shareable {
 
   function revokeKey(address key) execute(Operations.createLOC) {
     if (ownerIndex[uint(key)] != uint(0x0)) { // Make sure that the key being submitted isn't already CBE.
-      delete ownerIndex[uint(key)];
       remove(ownerIndex[uint(key)]);
+      delete ownerIndex[uint(key)];
       numAuthorizedKeys--;
     }
   }

@@ -6,10 +6,18 @@ import "ChronoBankPlatformInterface.sol";
 import "ERC20Interface.sol";
 
 contract ChronoMint is Managed {
-  uint private offeringCompaniesByIndex;
-  address platform;
-  mapping(uint => address) internal offeringCompanies;
+  address internal platform;
+  address[] internal offeringCompanies;
+  mapping(address => uint) internal offeringCompaniesIDs;
+  uint internal offeringCompaniesByIndex;
   event newLOC(address _from, address _LOC);
+
+  function isCBE(address key) returns(bool) {
+      if (isAuthorized(msg.sender)) {
+         return true;
+      }
+      return false;
+  }
   
   function claimOwnership(address _addr) onlyAuthorized() returns(bool) {
      if(Owned(_addr).claimContractOwnership()) {
@@ -57,19 +65,31 @@ contract ChronoMint is Managed {
  
   function addLOC (address _locAddr) onlyAuthorized() onlyAuthorized() execute(Operations.editMint) {
     offeringCompanies[offeringCompaniesByIndex] = _locAddr;
+    offeringCompaniesIDs[_locAddr] = offeringCompaniesByIndex;
     offeringCompaniesByIndex++;
   }
 
   function removeLOC(address _locAddr) onlyAuthorized() execute(Operations.editMint) {
-    delete offeringCompanies[offeringCompaniesByIndex];
+    remove(offeringCompaniesIDs[_locAddr]);
+    delete offeringCompaniesIDs[_locAddr];
     offeringCompaniesByIndex--;
   }
+
+  function remove(uint index){
+        if (index >= offeringCompanies.length) return;
+
+        for (uint i = index; i<offeringCompanies.length-1; i++){
+            offeringCompanies[i] = offeringCompanies[i+1];
+        }
+        delete offeringCompanies[owners.length-1];
+    }
 
   function proposeLOC(string _name, string _website, uint _issueLimit, string _publishedHash, uint _expDate) onlyAuthorized() returns(address) {
     address locAddr = new LOC(_name,_website,this,_issueLimit,_publishedHash,_expDate);
     offeringCompanies[offeringCompaniesByIndex] = locAddr;
-    newLOC(msg.sender, locAddr);
+    offeringCompaniesIDs[locAddr] = offeringCompaniesByIndex;
     offeringCompaniesByIndex++;
+    newLOC(msg.sender, locAddr);
     return locAddr;
   }
 
