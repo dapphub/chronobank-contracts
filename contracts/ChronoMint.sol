@@ -10,7 +10,6 @@ contract ChronoMint is Managed {
   address[] offeringCompanies;
   mapping(address => uint) offeringCompaniesIDs;
   event newLOC(address _from, address _LOC);
-  event Test(uint test);
 
   function isCBE(address key) returns(bool) {
       if (isAuthorized(msg.sender)) {
@@ -69,7 +68,6 @@ contract ChronoMint is Managed {
   }
 
   function removeLOC(address _locAddr) onlyAuthorized() execute(Operations.editMint) returns (bool) {
-    Test(offeringCompaniesIDs[_locAddr]);
     remove(offeringCompaniesIDs[_locAddr]);
     delete offeringCompaniesIDs[_locAddr];
     return true;
