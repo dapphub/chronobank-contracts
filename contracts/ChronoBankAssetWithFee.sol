@@ -1,7 +1,7 @@
 pragma solidity ^0.4.4;
 
-import "ChronoBankAsset.sol";
-import "Owned.sol";
+import "./ChronoBankAsset.sol";
+import "./Owned.sol";
 
 /**
  * @title ChronoBank Asset With Fee implementation contract.

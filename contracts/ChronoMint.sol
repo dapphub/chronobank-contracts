@@ -1,9 +1,9 @@
 pragma solidity ^0.4.4;
 
-import "Managed.sol";
-import "LOC.sol";
-import "ChronoBankPlatformInterface.sol";
-import "ERC20Interface.sol";
+import "./Managed.sol";
+import "./LOC.sol";
+import "./ChronoBankPlatformInterface.sol";
+import "./ERC20Interface.sol";
 
 contract ChronoMint is Managed {
   address internal platform;

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.4;
 
-import "ChronoBankAsset.sol";
+import "./ChronoBankAsset.sol";
 
 /**
  * @title ChronoBank TIME tokens contract.

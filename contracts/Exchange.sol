@@ -1,7 +1,7 @@
 pragma solidity ^0.4.4;
 
-import "Owned.sol";
-import {ERC20Interface as Asset} from "ERC20Interface.sol";
+import "./Owned.sol";
+import {ERC20Interface as Asset} from "./ERC20Interface.sol";
 
 /**
  * @title ERC20-Ether exchange contract.
