@@ -7,9 +7,8 @@ import "ERC20Interface.sol";
 
 contract ChronoMint is Managed {
   address internal platform;
-  address[] internal offeringCompanies;
-  mapping(address => uint) internal offeringCompaniesIDs;
-  uint internal offeringCompaniesByIndex;
+  address[] offeringCompanies;
+  mapping(address => uint) offeringCompaniesIDs;
   event newLOC(address _from, address _LOC);
 
   function isCBE(address key) returns(bool) {
@@ -64,15 +63,13 @@ contract ChronoMint is Managed {
   }
  
   function addLOC (address _locAddr) onlyAuthorized() onlyAuthorized() execute(Operations.editMint) {
-    offeringCompanies[offeringCompaniesByIndex] = _locAddr;
-    offeringCompaniesIDs[_locAddr] = offeringCompaniesByIndex;
-    offeringCompaniesByIndex++;
+     offeringCompaniesIDs[_locAddr] = offeringCompanies.length;
+     offeringCompanies.push(_locAddr);
   }
 
   function removeLOC(address _locAddr) onlyAuthorized() execute(Operations.editMint) {
     remove(offeringCompaniesIDs[_locAddr]);
     delete offeringCompaniesIDs[_locAddr];
-    offeringCompaniesByIndex--;
   }
 
   function remove(uint index){
@@ -82,13 +79,13 @@ contract ChronoMint is Managed {
             offeringCompanies[i] = offeringCompanies[i+1];
         }
         delete offeringCompanies[owners.length-1];
+        offeringCompanies.length--;
     }
 
   function proposeLOC(string _name, string _website, uint _issueLimit, string _publishedHash, uint _expDate) onlyAuthorized() returns(address) {
     address locAddr = new LOC(_name,_website,this,_issueLimit,_publishedHash,_expDate);
-    offeringCompanies[offeringCompaniesByIndex] = locAddr;
-    offeringCompaniesIDs[locAddr] = offeringCompaniesByIndex;
-    offeringCompaniesByIndex++;
+    offeringCompaniesIDs[locAddr] = offeringCompanies.length;
+    offeringCompanies.push(locAddr);
     newLOC(msg.sender, locAddr);
     return locAddr;
   }
@@ -105,12 +102,16 @@ contract ChronoMint is Managed {
     LOC(_LOCaddr).setString(uint(name),value);
   }
 
-  function getLOCbyID(uint _id) onlyAuthorized() returns(address) {
+  function getLOCs(uint _id) onlyAuthorized() returns(address) {
     return offeringCompanies[_id];
   }
 
+  function getLOCs() onlyAuthorized() returns(address[]) {
+    return offeringCompanies;
+  }
+
   function getLOCCount () onlyAuthorized() returns(uint) {
-      return offeringCompaniesByIndex;
+      return offeringCompanies.length;
   }
 
   function ChronoMint(address _eS, address _tpc, address _rc, address _ec, address _lhpc) {
