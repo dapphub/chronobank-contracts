@@ -8,4 +8,5 @@ before_install:
 install:
   - "testrpc > /dev/null &"
 script:
+  - "truffle compile"
   - "truffle test"
