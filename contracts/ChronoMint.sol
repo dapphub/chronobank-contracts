@@ -10,6 +10,7 @@ contract ChronoMint is Managed {
   address[] offeringCompanies;
   mapping(address => uint) offeringCompaniesIDs;
   event newLOC(address _from, address _LOC);
+  event Test(uint test);
 
   function isCBE(address key) returns(bool) {
       if (isAuthorized(msg.sender)) {
@@ -63,29 +64,30 @@ contract ChronoMint is Managed {
   }
  
   function addLOC (address _locAddr) onlyAuthorized() onlyAuthorized() execute(Operations.editMint) {
-     offeringCompaniesIDs[_locAddr] = offeringCompanies.length;
      offeringCompanies.push(_locAddr);
+     offeringCompaniesIDs[_locAddr] = offeringCompanies.length;
   }
 
-  function removeLOC(address _locAddr) onlyAuthorized() execute(Operations.editMint) {
+  function removeLOC(address _locAddr) onlyAuthorized() execute(Operations.editMint) returns (bool) {
+    Test(offeringCompaniesIDs[_locAddr]);
     remove(offeringCompaniesIDs[_locAddr]);
     delete offeringCompaniesIDs[_locAddr];
+    return true;
   }
 
-  function remove(uint index){
-        if (index >= offeringCompanies.length) return;
+  function remove(uint i) {
+        if (i >= offeringCompanies.length) return;
 
-        for (uint i = index; i<offeringCompanies.length-1; i++){
+        for (; i<offeringCompanies.length-1; i++){
             offeringCompanies[i] = offeringCompanies[i+1];
         }
-        delete offeringCompanies[owners.length-1];
         offeringCompanies.length--;
     }
 
   function proposeLOC(string _name, string _website, uint _issueLimit, string _publishedHash, uint _expDate) onlyAuthorized() returns(address) {
     address locAddr = new LOC(_name,_website,this,_issueLimit,_publishedHash,_expDate);
-    offeringCompaniesIDs[locAddr] = offeringCompanies.length;
-    offeringCompanies.push(locAddr);
+    offeringCompaniesIDs[locAddr] = offeringCompanies.length++;
+    offeringCompanies[offeringCompaniesIDs[locAddr]] = locAddr;
     newLOC(msg.sender, locAddr);
     return locAddr;
   }
@@ -102,7 +104,7 @@ contract ChronoMint is Managed {
     LOC(_LOCaddr).setString(uint(name),value);
   }
 
-  function getLOCs(uint _id) onlyAuthorized() returns(address) {
+  function getLOCbyID(uint _id) onlyAuthorized() returns(address) {
     return offeringCompanies[_id];
   }
 

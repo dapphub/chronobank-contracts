@@ -152,7 +152,7 @@ contract Shareable {
     }
   }
 
- function removeOp(uint i) {
+  function removeOp(uint i) {
     if (i >= pendingsIndex.length) return;
 
         while(i<pendingsIndex.length-1){
