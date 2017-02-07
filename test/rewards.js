@@ -1,3 +1,8 @@
+var Rewards = artifacts.require("./Rewards.sol");
+var FakeCoin = artifacts.require("./FakeCoin.sol");
+var FakeCoin2 = artifacts.require("./FakeCoin2.sol");
+var FakeCoin3 = artifacts.require("./FakeCoin3.sol");
+
 var Reverter = require('./helpers/reverter');
 var bytes32 = require('./helpers/bytes32');
 var eventsHelper = require('./helpers/eventsHelper');
@@ -56,12 +61,11 @@ contract('Rewards', (accounts) => {
   };
 
   before('Setup', (done) => {
-    reward = Rewards.deployed();
-    shares = FakeCoin.deployed();
-    asset1 = FakeCoin2.deployed();
-    asset2 = FakeCoin3.deployed();
-
-    // init shares
+    Rewards.deployed().then(function(instance) {
+    reward = instance});
+    FakeCoin.deployed().then(function(instance) {
+    shares = instance 
+// init shares
     shares.mint(accounts[0], SHARES_BALANCE)
       .then(() => shares.mint(accounts[1], SHARES_BALANCE))
       .then(() => shares.mint(accounts[2], SHARES_BALANCE))
@@ -69,6 +73,11 @@ contract('Rewards', (accounts) => {
       .then(() => reverter.snapshot(done))
       .catch(done);
   });
+    FakeCoin2.deployed().then(function(instance) {
+    asset1 = instance;});
+    FakeCoin3.deployed().then(function(instance) {
+    asset2 = instance;});
+});
 
   // init(address _sharesContract, uint _closeIntervalDays) returns(bool)
   it('should receive the right shares contract address after init() call', () => {

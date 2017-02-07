@@ -1,3 +1,6 @@
+var Exchange = artifacts.require("./Exchange.sol");
+var FakeCoin = artifacts.require("./FakeCoin.sol");
+
 var Reverter = require('./helpers/reverter');
 var bytes32 = require('./helpers/bytes32');
 var eventsHelper = require('./helpers/eventsHelper');
@@ -30,14 +33,18 @@ contract('Exchange', (accounts) => {
   };
 
   before('Set Coin contract address', (done) => {
-    exchange = Exchange.deployed();
-    coin = FakeCoin.deployed();
+    Exchange.deployed().then(function(instance) {
+    exchange = instance;
+    FakeCoin.deployed().then(function(instance) {
+    coin = instance;
     coin.mint(accounts[0], BALANCE)
       .then(() => coin.mint(accounts[1], BALANCE))
       .then(() => coin.mint(exchange.address, BALANCE))
       .then(() => web3.eth.sendTransaction({to: exchange.address, value: BALANCE_ETH, from: accounts[0]}))
       .then(() => reverter.snapshot(done))
       .catch(done);
+    });
+   });
   });
 
   it('should receive the right contract address after init() call', () => {

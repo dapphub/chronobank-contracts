@@ -1,3 +1,7 @@
+var ChronoBankPlatformTestable = artifacts.require("./ChronoBankPlatformTestable.sol");
+var EventsHistory = artifacts.require("./EventsHistory.sol");
+var ChronoBankPlatformEmitter = artifacts.require("./ChronoBankPlatformEmitter.sol");
+
 var Reverter = require('./helpers/reverter');
 var bytes32 = require('./helpers/bytes32');
 var eventsHelper = require('./helpers/eventsHelper');
@@ -27,9 +31,12 @@ contract('ChronoBankPlatform', function(accounts) {
   var eventsHistory;
 
   before('setup', function(done) {
-    chronoBankPlatform = ChronoBankPlatformTestable.deployed();
-    eventsHistory = EventsHistory.deployed();
-    var chronoBankPlatformEmitter = ChronoBankPlatformEmitter.deployed();
+    ChronoBankPlatformTestable.deployed().then(function(instance) {
+    chronoBankPlatform = instance;
+    EventsHistory.deployed().then(function(instance) {
+    eventsHistory = instance;
+    ChronoBankPlatformEmitter.deployed().then(function(instance) {
+    var chronoBankPlatformEmitter = instance;
     var chronoBankPlatformEmitterAbi = web3.eth.contract(chronoBankPlatformEmitter.abi).at('0x0');
     var fakeArgs = [0,0,0,0,0,0,0,0];
     chronoBankPlatform.setupEventsHistory(eventsHistory.address).then(function() {
@@ -52,6 +59,9 @@ contract('ChronoBankPlatform', function(accounts) {
       eventsHistory = ChronoBankPlatformEmitter.at(eventsHistory.address);
       reverter.snapshot(done);
     });
+   });
+   });
+   });
   });
 
   it('should not be possible to issue asset with existing symbol', function() {

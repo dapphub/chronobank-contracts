@@ -2,9 +2,13 @@ function EventsHelper() {
   var allEventsWatcher = undefined;
 
   var waitReceipt = function(transactionHash, address) {
+    //console.log(transactionHash.transactionHash);
     return new Promise(function(resolve, reject) {
       var transactionCheck = function() {
-        var receipt = web3.eth.getTransactionReceipt(transactionHash);
+       //web3.eth.getTransactionReceipt(transactionHash.transactionHash, function(err, transaction) {
+      //  console.info(transaction);    
+        receipt = transactionHash.receipt;
+       // console.log(receipt);
         if (receipt) {
           var count = 0;
           if (address) {
@@ -15,9 +19,11 @@ function EventsHelper() {
             count = receipt.logs.length;
           }
           return resolve(count);
-        } else {
-          setTimeout(transactionCheck, 100);
-        }
+        } 
+//else {
+//          setTimeout(transactionCheck, 100);
+//        }
+    //  });
       };
       transactionCheck();
     });

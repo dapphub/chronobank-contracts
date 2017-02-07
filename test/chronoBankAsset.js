@@ -1,3 +1,8 @@
+var ChronoBankPlatformTestable = artifacts.require("./ChronoBankPlatformTestable.sol");
+var ChronoBankAsset = artifacts.require("./ChronoBankAsset.sol");
+var ChronoBankAssetProxy = artifacts.require("./ChronoBankAssetProxy.sol");
+var Stub = artifacts.require("./Stub.sol");
+
 var Reverter = require('./helpers/reverter');
 var bytes32 = require('./helpers/bytes32');
 var eventsHelper = require('./helpers/eventsHelper');
@@ -17,12 +22,17 @@ contract('ChronoBankAsset', function(accounts) {
   var chronoBankPlatform;
   var chronoBankAsset;
   var chronoBankAssetProxy;
+  var stub;
 
   before('setup others', function(done) {
-    chronoBankPlatform = ChronoBankPlatformTestable.deployed();
-    chronoBankAsset = ChronoBankAsset.deployed();
-    chronoBankAssetProxy = ChronoBankAssetProxy.deployed();
-    var stub = Stub.deployed();
+    Stub.deployed().then(function(instance) {
+    stub = instance;
+    ChronoBankAsset.deployed().then(function(instance) {
+    chronoBankAsset = instance;
+    ChronoBankAssetProxy.deployed().then(function(instance) {
+    chronoBankAssetProxy = instance;
+    ChronoBankPlatformTestable.deployed().then(function(instance) {
+    chronoBankPlatform = instance;
     chronoBankPlatform.setupEventsHistory(stub.address).then(function() {
       return chronoBankPlatform.issueAsset(SYMBOL, VALUE, NAME, DESCRIPTION, BASE_UNIT, IS_REISSUABLE);
     }).then(function() {
@@ -36,6 +46,10 @@ contract('ChronoBankAsset', function(accounts) {
     }).then(function() {
       reverter.snapshot(done);
     }).catch(done);
+   });
+   });
+   });
+   });
   });
 
   it('should be possible to get total supply', function() {
