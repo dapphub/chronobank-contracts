@@ -1,7 +1,7 @@
 pragma solidity ^0.4.4;
 
-import "Managed.sol";
-import "LOC.sol";
+import "./Managed.sol";
+import "./LOC.sol";
 
 contract ChronoMint is Managed {
 

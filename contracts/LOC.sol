@@ -1,6 +1,6 @@
 pragma solidity ^0.4.4;
 
-import "Configurable.sol";
+import "./Configurable.sol";
 
 contract LOC is Configurable {
   Status public status;

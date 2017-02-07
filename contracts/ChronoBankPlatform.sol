@@ -1,6 +1,6 @@
 pragma solidity ^0.4.4;
 
-import "Owned.sol";
+import "./Owned.sol";
 
 contract Emitter {
     function emitTransfer(address _from, address _to, bytes32 _symbol, uint _value, string _reference);

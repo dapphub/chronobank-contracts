@@ -1,7 +1,7 @@
 pragma solidity ^0.4.4;
 
-import "Configurable.sol";
-import "Shareable.sol";
+import "./Configurable.sol";
+import "./Shareable.sol";
 
 contract Managed is Configurable, Shareable {
 

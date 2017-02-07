@@ -1,6 +1,6 @@
 pragma solidity ^0.4.4;
 
-import "ChronoBankAssetWithFee.sol";
+import "./ChronoBankAssetWithFee.sol";
 
 /**
  * @title ChronoBank LHT tokens contract.

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.4;
 
-import {ERC20Interface as Asset} from "ERC20Interface.sol";
+import {ERC20Interface as Asset} from "./ERC20Interface.sol";
 
 /**
  * @title Universal decentralized ERC20 tokens rewards contract.

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.4;
 
-import "Owned.sol";
+import "./Owned.sol";
 
 /**
  * @title Events History universal contract.
